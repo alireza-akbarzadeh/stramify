@@ -3,15 +3,16 @@ import { cva, type VariantProps } from 'class-variance-authority'
 export { default as Button } from './Button.vue'
 
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-all duration-200 cursor-pointer disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer active:scale-[0.98] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground shadow-md hover:opacity-90',
-        secondary: 'bg-secondary text-secondary-foreground hover:opacity-90',
-        destructive: 'bg-destructive text-destructive-foreground hover:opacity-90',
-        outline: 'border border-border bg-transparent text-foreground hover:bg-accent',
-        ghost: 'bg-transparent text-foreground hover:bg-accent',
+        default:
+          'bg-primary text-primary-foreground shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_24px_-6px_rgba(225,29,72,0.45)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_12px_32px_-4px_rgba(225,29,72,0.6)] hover:-translate-y-px active:translate-y-0',
+        secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
+        destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:opacity-90',
+        outline: 'border border-border bg-white/[0.02] text-foreground hover:bg-white/[0.06] hover:border-white/20',
+        ghost: 'bg-transparent text-foreground hover:bg-white/[0.06]',
         link: 'bg-transparent text-primary underline-offset-4 hover:underline'
       },
       size: {

@@ -14,7 +14,7 @@ const modelValue = defineModel<string>({ required: true })
 
 <template>
   <div class="space-y-1.5">
-    <label :for="id" class="text-sm font-medium text-foreground">{{ label }}</label>
+    <label :for="id" class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{{ label }}</label>
     <Input
       :id="id"
       v-model="modelValue"

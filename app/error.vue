@@ -22,6 +22,6 @@ function handleError() {
     <p class="text-sm font-medium text-muted-foreground">{{ error.status }}</p>
     <h1 class="text-2xl font-semibold text-foreground">{{ heading }}</h1>
     <p class="max-w-md text-sm text-muted-foreground">{{ message }}</p>
-    <Button @click="handleError">Go back home</Button>
+    <Button  @click="handleError">Go back home</Button>
   </div>
 </template>
