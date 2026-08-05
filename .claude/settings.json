@@ -13,7 +13,9 @@
       "Bash(uv tool *)",
       "Bash(graphify --version)",
       "Bash(graphify install *)",
-      "Bash(uv run *)"
+      "Bash(uv run *)",
+      "Bash(node -e ' *)",
+      "Bash(npx nuxt *)"
     ]
   },
   "hooks": {

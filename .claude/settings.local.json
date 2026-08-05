@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm audit *)",
+      "Bash(npx shadcn-vue@latest --help)",
+      "Bash(npx shadcn-vue@latest init --help)",
+      "Bash(npx shadcn-vue@latest init -t nuxt --icon-library lucide -b slate -y -d --pointer --css-variables)",
+      "Bash(npx shadcn-vue@latest init -t nuxt --icon-library lucide -b neutral -y -d --pointer --css-variables)",
+      "Bash(curl -sS -m 10 -o /dev/null -w \"%{http_code}\\\\n\" https://shadcn-vue.com/init)",
+      "Bash(curl -sS -m 10 -o /dev/null -w \"%{http_code}\\\\n\" https://registry.npmjs.org)",
+      "Bash(npm uninstall *)"
+    ]
+  }
+}
