@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "defuddle": {
+      "source": "kepano/obsidian-skills",
+      "sourceType": "github",
+      "skillPath": "skills/defuddle/SKILL.md",
+      "computedHash": "ad2cf050eced5f0d9057d534bf6e084bd8d6e521529b5b783940b20fd835c4df"
+    }
+  }
+}
