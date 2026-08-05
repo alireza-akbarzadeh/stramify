@@ -6,6 +6,10 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
   modules: ['@pinia/nuxt', '@vueuse/nuxt', '@nuxt/eslint'],
+  // components/ui/* follows shadcn-vue's convention: imported explicitly via
+  // its index.ts barrel, not auto-registered (its own index.ts otherwise
+  // collides with the auto-registered component name — NUXT_B3011).
+  components: [{ path: '~/components', pathPrefix: false, ignore: ['ui/**'] }],
   vite: {
     plugins: [tailwindcss()]
   },

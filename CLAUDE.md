@@ -67,6 +67,14 @@ Cloudflare R2 (object storage) · Postgres full-text search · pino + Sentry
    session (unexpected recent timestamps, content you didn't write), stop
    and reconcile before overwriting — see docs/PROGRESS.md's "Concurrent
    session note" if present, and ask the user rather than guessing.
+10. **Modular, small units.** If a function, composable, or `<script setup>`
+    block passes ~15 lines of actual logic, pull the excess into a separate
+    function/component/composable rather than letting it grow — one clear
+    responsibility per unit. Reuse over duplication: if two places need the
+    same piece of markup or logic, extract it into `app/components/` or
+    `app/composables/` and import it in both, don't copy-paste. This applies
+    to every task, not just new pages — apply it when touching existing code
+    too.
 
 ## Skills installed (`.claude/skills/`)
 

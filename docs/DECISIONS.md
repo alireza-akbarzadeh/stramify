@@ -227,3 +227,39 @@ requirement justifies the operational complexity they'd add.
 
 **Consequences**: Revisit only when a concrete scaling bottleneck appears
 (e.g., chat fan-out volume actually saturates a single Redis instance).
+
+---
+
+## ADR-011: motion-v for section/UI animation
+
+**Context**: PROMPT.md §8 calls for "subtle motion" and "premium
+micro-interactions" as part of the UI direction; the user asked directly for
+a Framer-Motion-equivalent for reusable section animations (fade/slide-in on
+scroll, staggered lists) rather than hand-rolled CSS transitions for
+anything beyond simple hover/focus states.
+
+**Decision**: `motion-v` — the official Vue port of Motion (the same team
+and API as Framer Motion for React: `<motion.div>` components, `while-in-view`
+props, `AnimatePresence`), wrapped into reusable components under
+`app/components/motion/` (e.g. a `Reveal` wrapper) rather than using its
+primitives ad hoc inline in every page.
+
+**Rejected**: `@vueuse/motion` (`v-motion` directive) — also solid and
+already in the same ecosystem as VueUse (already a dependency), but a
+directive-based API is a worse fit for building named, reusable animation
+*components* as the user asked for, and its preset/variant model is less
+directly transferable from Framer Motion knowledge. Hand-rolled CSS
+`@keyframes`/transitions — sufficient for simple hover/focus states
+(already used throughout `AppHeader`/`AppFooter`) but not for scroll-triggered
+reveals or staggered children without reimplementing an intersection-observer
+layer by hand. GSAP — more powerful for complex timeline choreography, but
+heavier and overkill for section-level reveals; revisit only if a specific
+page (e.g. a marketing-heavy landing redesign) needs real timeline
+choreography.
+
+**Consequences**: One more runtime dependency. `motion-v` does not disable
+animation for `prefers-reduced-motion` on its own, so the shared `Reveal`
+wrapper (`app/components/motion/Reveal.vue`) checks it explicitly via
+VueUse's `usePreferredReducedMotion` and skips the transition, per the
+accessibility requirement in PROMPT.md §17 — any future animation component
+must do the same rather than assuming the library handles it.

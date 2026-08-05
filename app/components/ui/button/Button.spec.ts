@@ -1,3 +1,4 @@
+// @vitest-environment nuxt
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { describe, expect, it } from 'vitest'
 import { Button } from '.'

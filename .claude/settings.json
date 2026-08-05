@@ -15,7 +15,21 @@
       "Bash(graphify install *)",
       "Bash(uv run *)",
       "Bash(node -e ' *)",
-      "Bash(npx nuxt *)"
+      "Bash(npx nuxt *)",
+      "Bash(npm run *)",
+      "Bash(npm install *)",
+      "Bash(echo \"EXIT CODE: $?\")",
+      "Bash(sleep 8 && cat /tmp/streamify-dev.log)",
+      "Read(//private/tmp/**)",
+      "Bash(curl -sS -o /dev/null -w \"home: %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -sS -o /dev/null -w \"auth session: %{http_code}\\\\n\" http://localhost:3000/api/auth/get-session)",
+      "Bash(curl -sS http://localhost:3000/)",
+      "Bash(cat /tmp/streamify-dev.log)",
+      "Bash(timeout 60 npx playwright install chromium --with-deps)",
+      "Read(//Users/alirezaakbarzadeh/Library/Caches/ms-playwright/**)",
+      "Read(//Users/alirezaakbarzadeh/.cache/**)",
+      "Bash(npx playwright *)",
+      "Bash(timeout 60 npx playwright test)"
     ]
   },
   "hooks": {
