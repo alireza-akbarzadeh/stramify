@@ -12,7 +12,8 @@
       "Bash(command -v python)",
       "Bash(uv tool *)",
       "Bash(graphify --version)",
-      "Bash(graphify install *)"
+      "Bash(graphify install *)",
+      "Bash(uv run *)"
     ]
   },
   "hooks": {
