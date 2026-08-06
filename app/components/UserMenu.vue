@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuRoot, DropdownMenuSeparator, DropdownMenuTrigger } from 'reka-ui'
-import { LayoutDashboard, LogOut, Settings, ShieldCheck } from '@lucide/vue'
+import { BadgeCheck, LayoutDashboard, LogOut, ShieldCheck, ShieldHalf } from '@lucide/vue'
 import { useAuth } from '@/composables/useAuth'
 
 const { user, signOut } = useAuth()
@@ -10,29 +10,47 @@ const initial = computed(() => (user.value?.name || user.value?.email || '?').ch
 const links = [
   { to: '/dashboard', label: 'Creator dashboard', icon: LayoutDashboard },
   { to: '/settings/security', label: 'Security', icon: ShieldCheck },
-  { to: '/settings/two-factor', label: 'Two-factor auth', icon: Settings }
+  { to: '/settings/two-factor', label: 'Two-factor auth', icon: ShieldHalf }
 ]
 </script>
 
 <template>
   <DropdownMenuRoot>
     <DropdownMenuTrigger
-      class="grid size-10 cursor-pointer place-items-center rounded-full border border-border bg-glass text-sm font-semibold text-foreground backdrop-blur transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      class="group relative grid size-10 cursor-pointer place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       :aria-label="`Account menu for ${user?.name || user?.email}`"
     >
-      <img v-if="user?.image" :src="user.image" alt="" class="size-full rounded-full object-cover">
-      <span v-else>{{ initial }}</span>
+      <span
+        class="absolute inset-0 rounded-full bg-gradient-to-tr from-primary via-primary/60 to-accent opacity-90 transition-transform duration-300 group-hover:scale-105 group-data-[state=open]:scale-105"
+      />
+      <span class="relative grid size-[calc(100%-4px)] place-items-center overflow-hidden rounded-full bg-background text-sm font-semibold text-foreground">
+        <img v-if="user?.image" :src="user.image" :alt="user.name || ''" class="size-full object-cover">
+        <span v-else>{{ initial }}</span>
+      </span>
+      <span
+        class="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background bg-emerald-500"
+        aria-hidden="true"
+      />
     </DropdownMenuTrigger>
 
     <DropdownMenuPortal>
       <DropdownMenuContent
-        :side-offset="8"
+        :side-offset="10"
         align="end"
-        class="z-50 w-60 rounded-xl border border-border bg-popover p-1.5 shadow-[0_24px_60px_-24px_var(--shadow-color)] backdrop-blur-xl"
+        class="z-50 w-64 origin-top-right rounded-xl border border-border bg-popover p-1.5 shadow-[0_24px_60px_-24px_var(--shadow-color)] backdrop-blur-xl data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
       >
-        <div class="px-2.5 py-2">
-          <p class="truncate text-sm font-medium text-foreground">{{ user?.name }}</p>
-          <p class="truncate text-xs text-muted-foreground">{{ user?.email }}</p>
+        <div class="flex items-center gap-3 px-2.5 py-2.5">
+          <span class="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border border-border bg-surface-2 text-sm font-semibold text-foreground">
+            <img v-if="user?.image" :src="user.image" :alt="user.name || ''" class="size-full object-cover">
+            <span v-else>{{ initial }}</span>
+          </span>
+          <div class="min-w-0">
+            <p class="flex items-center gap-1 truncate text-sm font-medium text-foreground">
+              {{ user?.name }}
+              <BadgeCheck v-if="user?.emailVerified" class="size-3.5 shrink-0 text-primary" aria-label="Verified email" />
+            </p>
+            <p class="truncate text-xs text-muted-foreground">{{ user?.email }}</p>
+          </div>
         </div>
 
         <DropdownMenuSeparator class="my-1 h-px bg-border" />

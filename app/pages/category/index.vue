@@ -5,7 +5,9 @@ useHead({ title: 'Categories — Streamify' })
 <template>
   <main id="main-content">
     <AppHeader />
-    <ComingSoon title="Categories" description="Discover streams and videos by category — built in Phase 5 (Discovery)." />
+    <div class="mx-auto max-w-[1560px] px-4 py-8 sm:px-8 mt-12">
+      <CategoryGrid />
+    </div>
     <AppFooter />
   </main>
 </template>

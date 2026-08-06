@@ -9,6 +9,18 @@ export function formatCount(count: number): string {
   return `${(count / 1000).toFixed(1).replace(/\.0$/, '')}k`
 }
 
+/**
+ * How long a live session has been running, e.g. `"9m"`, `"3h 17m"`.
+ * Unlike `formatAge` this never says "ago" — it's an uptime, and it stays
+ * minute-precise past the hour because live viewers read it as "how much
+ * have I missed".
+ */
+export function formatUptime(startedAt: Date): string {
+  const minutes = Math.max(0, Math.floor((Date.now() - startedAt.getTime()) / 60_000))
+  if (minutes < 60) return `${minutes}m`
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`
+}
+
 export function formatAge(createdAt: Date): string {
   const diffMs = Date.now() - createdAt.getTime()
   const minutes = Math.floor(diffMs / 60_000)

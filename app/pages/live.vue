@@ -5,7 +5,7 @@ useHead({ title: 'Live — Streamify' })
 <template>
   <main id="main-content">
     <AppHeader />
-    <ComingSoon title="Live directory" description="Browse everyone streaming right now — built in Phase 5 (Discovery)." />
+    <LiveDirectory />
     <AppFooter />
   </main>
 </template>

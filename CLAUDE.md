@@ -86,6 +86,12 @@ Installed via the `ui-ux-pro-max-cli` (see ADR-009): `ui-ux-pro-max`
 Phase 2 (design system) and ongoing UI work instead of re-deriving palette/
 type-scale decisions from scratch.
 
+Project-authored (not from the CLI): `graphify` (codebase knowledge graph)
+and `motion` — this app's animation system. `motion` documents when to use
+`data-state` + `tw-animate-css` for Reka UI overlays (Dialog, DropdownMenu,
+Popover, …) vs `motion-v` for content animation (scroll reveals, stagger,
+gestures) — read it before adding or touching any animation/transition.
+
 ## Process (see docs/PROMPT.md §19 for full phase descriptions)
 
 Phase 0 Research → Phase 1 Architecture → Phase 2 Design System →

@@ -263,3 +263,61 @@ wrapper (`app/components/motion/Reveal.vue`) checks it explicitly via
 VueUse's `usePreferredReducedMotion` and skips the transition, per the
 accessibility requirement in PROMPT.md §17 — any future animation component
 must do the same rather than assuming the library handles it.
+
+---
+
+## ADR-012: Vidstack for clip playback; clips table replaces discovery fixtures
+
+**Context**: The discovery feed (Phase 5) shipped with `/api/discovery/clips`
+serving static fixture data and a player modal that only showed a static
+thumbnail with a fake play icon — no actual video ever played, which
+violates the "no fake functionality" rule in CLAUDE.md once a feature is
+presented as usable rather than as a scaffolding placeholder. The user asked
+to connect clips to a real API and wire up a genuine, free, full-featured
+player, ahead of Cloudflare Stream (ADR-005) actually being configured
+(`CLOUDFLARE_STREAM_API_TOKEN` is still unset in `.env`).
+
+**Decision**: Two changes, scoped to clips only (live signals/streaming stay
+on fixtures — that's Phase 7, unchanged):
+1. Added a real `clips` table (`server/db/schema/clips.ts`, Drizzle +
+   Postgres — same DB already used for auth) with a `videoUrl` column
+   holding a directly playable source (mp4 or HLS). `/api/discovery/clips`
+   (`server/api/discovery/clips.get.ts`) now queries it instead of
+   importing fixture objects. `scripts/seed-clips.mjs` seeds it with
+   curl-verified, freely-licensed public test videos (W3C's `media.w3.org`
+   assets, MDN's CC0 video set, Mux's public HLS test streams) — real,
+   playable content, clearly sourced as seed data rather than hand-waved
+   fixtures, matching the pattern of swapping in Cloudflare Stream playback
+   URLs later without changing the column shape or the API contract.
+2. Installed `vidstack` (`vidstack@1.15.6`, MIT licensed, npm `next` tag —
+   the `latest` tag is a stale 0.x beta and must not be reinstalled) as the
+   player. Wired via `app/plugins/vidstack.client.ts` (side-effect element
+   registration, client-only since it defines real custom elements),
+   `nuxt.config.ts`'s `vue.compilerOptions.isCustomElement` (so Vue's
+   compiler leaves `media-*` tags as native DOM elements), and its default
+   theme CSS. `ClipPlayerModal.vue` renders `<media-player>` +
+   `<media-provider>` + `<media-video-layout>` when `item.videoUrl` is set;
+   falls back to the old static-thumbnail treatment for live items (which
+   still have no playable source, Phase 7).
+
+**Rejected**: `vue-plyr`/Plyr — solid and simpler, but no native HLS/DASH
+handling or built-in quality menu; would need hls.js wired up by hand
+either way. Video.js — mature but jQuery-era API and heavier default
+bundle for a Vue app. Hand-rolled `<video>` — fine for a single mp4 but
+doesn't scale to HLS adaptive streaming, which Cloudflare Stream delivers,
+so it'd need replacing later anyway. Google's `gtv-videos-bucket` sample
+set (the most commonly copy-pasted "free test video" source in tutorials)
+was tried first for seed data and rejected — it now 403s on every file
+(verified via `curl -I`), so don't reintroduce it without re-checking live.
+
+**Consequences**: `npm run db:seed` must be re-run after
+`npm run db:migrate` on any fresh database (documented in
+`scripts/seed-clips.mjs`'s header comment). When Cloudflare Stream
+credentials land (ADR-005, Phase 7), swap `videoUrl` values for Stream
+HLS manifest URLs — no schema or component change needed, since the
+player already treats its source as an opaque playable URL. A
+`shared/types/vidstack.d.ts` ambient import (`import 'vidstack/vue'`) is
+required for `media-player`/`media-provider`/`media-video-layout` to
+type-check in `.vue` templates — vidstack ships this augmentation itself,
+it just isn't picked up automatically without an import somewhere in the
+TS program.

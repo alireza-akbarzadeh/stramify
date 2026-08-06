@@ -15,6 +15,13 @@
       "when": 1786040152281,
       "tag": "0001_mature_gambit",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786042549638,
+      "tag": "0002_noisy_lady_deathstrike",
+      "breakpoints": true
     }
   ]
 }

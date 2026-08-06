@@ -1,12 +1,14 @@
-// Seeds the `clips` table with real, freely-licensed sample videos (Blender
-// Foundation open movies + Google's public test bucket) so the discovery
-// feed has genuinely playable content before creator uploads exist.
-// Run with: npm run db:seed
+// Seeds the `clips` table with real, freely-licensed sample videos (W3C's
+// long-standing media test assets, MDN's CC0 video set, and Mux's public
+// HLS test streams) so the discovery feed has genuinely playable content
+// before creator uploads exist. Every URL below was curl-verified live —
+// Google's old gtv-videos-bucket sample set (a common tutorial choice) now
+// 403s, so don't reintroduce it without re-checking.
+// Run with: npm run db:seed:clips (or npm run db:seed for every seed script)
 import postgres from 'postgres'
 
 const sql = postgres(process.env.DATABASE_URL ?? '', { max: 1 })
 
-const bucket = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample'
 const placeholder = (seed) => `https://picsum.photos/seed/${seed}/960/540`
 const hoursAgo = (h) => new Date(Date.now() - h * 60 * 60 * 1000)
 
@@ -16,7 +18,9 @@ const clips = [
     title: 'The Midnight Echo: Unrehearsed Encore at Tokyo Dome',
     creator: 'EchoCollective',
     category: 'Music',
-    videoUrl: `${bucket}/Sintel.mp4`,
+    // Mux's public HLS test stream (adaptive bitrate) — shows off the
+    // player's HLS support on the flagship featured clip.
+    videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
     thumbnailUrl: placeholder('midnight-echo'),
     durationSeconds: 165,
     views: 12400,
@@ -28,9 +32,9 @@ const clips = [
     title: 'The Perfect Triple-Kill Flank',
     creator: 'GhostOperator',
     category: 'Gaming',
-    videoUrl: `${bucket}/ForBiggerBlazes.mp4`,
+    videoUrl: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
     thumbnailUrl: placeholder('triple-kill'),
-    durationSeconds: 45,
+    durationSeconds: 33,
     views: 14200,
     featured: false,
     createdAt: hoursAgo(2)
@@ -40,9 +44,9 @@ const clips = [
     title: 'Modular Synthesis Peak Moment',
     creator: 'Patch_Bay',
     category: 'Music',
-    videoUrl: `${bucket}/ForBiggerJoyrides.mp4`,
+    videoUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
     thumbnailUrl: placeholder('modular-synthesis'),
-    durationSeconds: 80,
+    durationSeconds: 60,
     views: 8900,
     featured: false,
     createdAt: hoursAgo(4)
@@ -52,9 +56,9 @@ const clips = [
     title: 'Rendering the Final Details',
     creator: 'Canvas_Queen',
     category: 'Creative',
-    videoUrl: `${bucket}/ElephantsDream.mp4`,
+    videoUrl: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
     thumbnailUrl: placeholder('rendering-details'),
-    durationSeconds: 192,
+    durationSeconds: 52,
     views: 22100,
     featured: false,
     createdAt: hoursAgo(1)
@@ -64,9 +68,9 @@ const clips = [
     title: 'Chasing the Golden Hour Light',
     creator: 'Sky_High',
     category: 'Creative',
-    videoUrl: `${bucket}/ForBiggerFun.mp4`,
+    videoUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4',
     thumbnailUrl: placeholder('golden-hour'),
-    durationSeconds: 58,
+    durationSeconds: 30,
     views: 1500,
     featured: false,
     createdAt: hoursAgo(5)
@@ -76,9 +80,9 @@ const clips = [
     title: 'Dirt to Street in Under a Minute',
     creator: 'Subaru_Nomad',
     category: 'Gaming',
-    videoUrl: `${bucket}/SubaruOutbackOnStreetAndDirt.mp4`,
+    videoUrl: 'https://media.w3.org/2010/05/video/movie_300.mp4',
     thumbnailUrl: placeholder('street-run'),
-    durationSeconds: 596,
+    durationSeconds: 60,
     views: 6300,
     featured: false,
     createdAt: hoursAgo(8)
@@ -88,9 +92,9 @@ const clips = [
     title: 'Forging the Final Cut',
     creator: 'Canvas_Queen',
     category: 'Creative',
-    videoUrl: `${bucket}/TearsOfSteel.mp4`,
+    videoUrl: 'https://test-streams.mux.dev/pts_shift/master.m3u8',
     thumbnailUrl: placeholder('steel-forge'),
-    durationSeconds: 734,
+    durationSeconds: 30,
     views: 9700,
     featured: false,
     createdAt: hoursAgo(12)

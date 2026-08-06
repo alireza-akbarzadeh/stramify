@@ -19,10 +19,12 @@ const emit = defineEmits<{ (e: 'close' | 'toggle-save'): void }>()
 <template>
   <DialogRoot :open="!!item" @update:open="(open) => !open && emit('close')">
     <DialogPortal>
-      <DialogOverlay class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" />
+      <DialogOverlay
+        class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm duration-200 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 motion-reduce:animate-none"
+      />
       <DialogContent
         v-if="item"
-        class="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-card shadow-[0_24px_60px_-24px_var(--shadow-color)]"
+        class="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-card shadow-[0_24px_60px_-24px_var(--shadow-color)] duration-200 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 motion-reduce:animate-none"
       >
         <DialogTitle class="sr-only">{{ item.title }}</DialogTitle>
         <DialogDescription class="sr-only"
@@ -36,7 +38,6 @@ const emit = defineEmits<{ (e: 'close' | 'toggle-save'): void }>()
             :title="item.title"
             :src="item.videoUrl"
             :poster="item.image"
-            crossorigin
             playsinline
             autoplay
           >
@@ -86,7 +87,7 @@ const emit = defineEmits<{ (e: 'close' | 'toggle-save'): void }>()
               v-if="!item.videoUrl"
               class="hidden items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary sm:flex"
             >
-              <Tv class="size-4" /> Live streaming coming soon
+              <Tv class="size-4" /> Playback source unavailable
             </span>
           </div>
         </div>

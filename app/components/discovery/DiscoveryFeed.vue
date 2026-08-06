@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Search, X } from '@lucide/vue'
-import type { Clip, ClipCategory, LiveSignal, WatchlistItem } from '#shared/types/discovery'
+import type { ClipCategory, WatchlistItem } from '#shared/types/discovery'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useDiscoveryClips } from '@/composables/useDiscoveryClips'
 import { useLiveSignals } from '@/composables/useLiveSignals'
 import { useWatchlist } from '@/composables/useWatchlist'
+import { clipToItem, liveToItem } from '@/utils/watchlist'
 import FeaturedClip from './FeaturedClip.vue'
 import LiveSignalsRail from './LiveSignalsRail.vue'
 import ClipGrid from './ClipGrid.vue'
@@ -46,29 +47,6 @@ const filteredClips = computed(() => {
 const savedClips = computed(() => saved.value.filter((item) => item.kind === 'clip'))
 const savedLive = computed(() => saved.value.filter((item) => item.kind === 'live'))
 const selectedSaved = computed(() => (selectedItem.value ? isSaved(selectedItem.value.id) : false))
-
-function clipToItem(clip: Clip): WatchlistItem {
-  return {
-    id: clip.id,
-    kind: 'clip',
-    title: clip.title,
-    creator: clip.creator,
-    meta: `${clip.duration} · ${clip.views}`,
-    image: clip.image,
-    videoUrl: clip.videoUrl
-  }
-}
-
-function liveToItem(signal: LiveSignal): WatchlistItem {
-  return {
-    id: signal.id,
-    kind: 'live',
-    title: signal.name,
-    creator: signal.name,
-    meta: signal.viewers,
-    image: signal.image
-  }
-}
 
 function toggleSelected() {
   if (selectedItem.value) toggle(selectedItem.value)
