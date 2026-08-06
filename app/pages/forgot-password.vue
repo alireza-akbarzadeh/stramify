@@ -13,7 +13,7 @@ const pending = ref(false)
 async function onSubmit() {
   error.value = ''
   pending.value = true
-  const { error: authError } = await authClient.forgetPassword({
+  const { error: authError } = await authClient.requestPasswordReset({
     email: email.value,
     redirectTo: '/reset-password'
   })

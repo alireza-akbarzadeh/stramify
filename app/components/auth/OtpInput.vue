@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { PinInputRoot, PinInputInput } from 'reka-ui'
 
-const model = defineModel<string[]>({ required: true })
+// Reka's PinInput models `type="number"` as number[]; the parent only ever
+// needs the joined string, so the array type is kept internal to this file.
+const model = defineModel<number[]>({ required: true })
 defineProps<{ id?: string }>()
 const emit = defineEmits<{ (e: 'complete', code: string): void }>()
 </script>

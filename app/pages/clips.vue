@@ -5,7 +5,7 @@ useHead({ title: 'Clips — Streamify' })
 <template>
   <main id="main-content">
     <AppHeader />
-    <ComingSoon title="Clips" description="Short highlights from live streams — built alongside Phase 7 (Live Streaming)." />
+    <DiscoveryFeed />
     <AppFooter />
   </main>
 </template>

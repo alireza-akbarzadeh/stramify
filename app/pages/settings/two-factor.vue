@@ -11,7 +11,7 @@ type Step = 'password' | 'scan' | 'done'
 const step = ref<Step>('password')
 
 const password = ref('')
-const otp = ref<string[]>([])
+const otp = ref<number[]>([])
 const qrDataUrl = ref('')
 const backupCodes = ref<string[]>([])
 const error = ref('')

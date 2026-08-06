@@ -13,7 +13,7 @@ const pending = ref(false)
 
 /** 'credentials' → email+password, 'twoFactor' → TOTP challenge. */
 const step = ref<'credentials' | 'twoFactor'>('credentials')
-const otp = ref<string[]>([])
+const otp = ref<number[]>([])
 const useBackupCode = ref(false)
 const backupCode = ref('')
 

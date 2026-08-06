@@ -12,9 +12,14 @@ const features = [
   <div class="relative hidden flex-col justify-between overflow-hidden p-10 lg:flex xl:p-14">
     <BrandMark />
 
-    <div class="relative py-10">
-      <!-- Carousel sits behind the copy, dimmed so the text keeps contrast. -->
-      <div class="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center opacity-45">
+    <div class="relative isolate py-10">
+      <!--
+        Carousel sits behind the copy, dimmed so the text keeps contrast.
+        `isolate` on the parent scopes the negative z-index to this stacking
+        context — without it the layer drops behind the page background and
+        disappears entirely.
+      -->
+      <div class="pointer-events-none absolute inset-0 -z-10 flex translate-x-28 items-center justify-center opacity-25">
         <ChannelCarousel />
       </div>
 

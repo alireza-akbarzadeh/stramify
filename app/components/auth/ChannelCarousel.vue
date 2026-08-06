@@ -19,7 +19,7 @@ const step = 360 / channels.length
     animation is dropped entirely under prefers-reduced-motion.
   -->
   <div
-    class="relative h-[300px] [perspective:1200px] [mask-image:radial-gradient(ellipse_75%_75%_at_50%_50%,black_55%,transparent)]"
+    class="relative h-75 w-full [perspective:1200px] [mask-image:radial-gradient(ellipse_75%_75%_at_50%_50%,black_55%,transparent)]"
     aria-hidden="true"
   >
     <div
@@ -29,7 +29,7 @@ const step = 360 / channels.length
       <div
         v-for="(channel, i) in channels"
         :key="channel.title"
-        class="absolute left-1/2 top-1/2 h-[186px] w-[132px] -translate-x-1/2 -translate-y-1/2"
+        class="absolute left-1/2 top-1/2 h-46.5 w-33 -translate-x-1/2 -translate-y-1/2 backface-hidden"
         :style="{ transform: `rotateY(${i * step}deg) translateZ(${RADIUS}px)` }"
       >
         <ChannelCard v-bind="channel" />
