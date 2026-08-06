@@ -1,37 +1,68 @@
 <script setup lang="ts">
 const columns = [
-  { title: 'Product', links: [['Live', '/live'], ['Categories', '/category'], ['Clips', '/clips']] },
-  { title: 'Creators', links: [['Dashboard', '/dashboard'], ['Go live', '/dashboard/stream'], ['Analytics', '/dashboard/analytics']] },
-  { title: 'Company', links: [['About', '/about'], ['Careers', '/careers'], ['Security', '/security']] }
+  {
+    title: 'Product',
+    links: [
+      ['Live', '/live'],
+      ['Categories', '/category'],
+      ['Clips', '/clips'],
+      ['Following', '/following']
+    ]
+  },
+  {
+    title: 'Creators',
+    links: [
+      ['Dashboard', '/dashboard'],
+      ['Go live', '/dashboard/stream'],
+      ['Analytics', '/dashboard/analytics']
+    ]
+  },
+  {
+    title: 'Company',
+    links: [
+      ['About', '/about'],
+      ['Careers', '/careers'],
+      ['Security', '/security']
+    ]
+  }
 ]
 </script>
 
 <template>
-  <footer class="border-t border-white/10">
-    <div class="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-4 lg:px-8">
+  <footer class="border-t border-border">
+    <div class="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-[1.4fr_repeat(3,1fr)] lg:px-8">
       <div>
-        <div class="flex items-center gap-2 text-lg font-semibold text-white">
-          <span class="inline-block h-6 w-6 rounded-md bg-rose-600" aria-hidden="true" />
-          Streamify
-        </div>
-        <p class="mt-3 max-w-xs text-sm text-slate-400">
-          A next-generation home for live streaming and video, built for creators and their communities.
+        <BrandMark />
+        <p class="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
+          A next-generation home for live streaming and video, built for creators and their
+          communities.
+        </p>
+        <p class="mt-6 inline-flex items-center gap-2 text-xs text-muted-foreground">
+          <span class="size-1.5 rounded-full bg-success" aria-hidden="true" />
+          All systems operational
         </p>
       </div>
 
       <div v-for="col in columns" :key="col.title">
-        <h3 class="text-sm font-semibold text-white">{{ col.title }}</h3>
+        <h3 class="text-sm font-semibold text-foreground">{{ col.title }}</h3>
         <ul class="mt-4 space-y-3">
           <li v-for="[label, to] in col.links" :key="to">
-            <NuxtLink :to="to" class="text-sm text-slate-400 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-md">
+            <NuxtLink
+              :to="to"
+              class="rounded-md text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
               {{ label }}
             </NuxtLink>
           </li>
         </ul>
       </div>
     </div>
-    <div class="border-t border-white/10 px-4 py-6 text-center text-xs text-slate-500 sm:px-6 lg:px-8">
-      © {{ new Date().getFullYear() }} Streamify. All rights reserved.
+
+    <div class="border-t border-border">
+      <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:px-6 lg:px-8">
+        <p>© {{ new Date().getFullYear() }} Streamify. All rights reserved.</p>
+        <p>Built with Nuxt · Early access</p>
+      </div>
     </div>
   </footer>
 </template>

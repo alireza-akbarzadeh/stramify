@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from '../db/client'
 import * as schema from '../db/schema'
+import { dash } from "@better-auth/infra";
 
 /**
  * Database-backed sessions (ADR-007) — a ban/role change takes effect on
@@ -16,5 +17,6 @@ export const auth = betterAuth({
   baseURL: process.env.PUBLIC_APP_URL || 'http://localhost:3000',
   emailAndPassword: {
     enabled: true
-  }
+  },
+  plugins:[dash()]
 })

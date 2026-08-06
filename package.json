@@ -21,6 +21,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@better-auth/infra": "^0.3.7",
     "@heroicons/vue": "^2.2.0",
     "@lucide/vue": "^1.28.0",
     "@pinia/nuxt": "^1.0.1",
@@ -46,6 +47,7 @@
   "devDependencies": {
     "@nuxt/eslint": "^1.16.0",
     "@nuxt/test-utils": "^4.1.0",
+    "@nuxtjs/color-mode": "^4.0.1",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.3.3",
     "@vue/test-utils": "^2.4.11",

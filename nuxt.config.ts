@@ -5,7 +5,10 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
-  modules: ['@pinia/nuxt', '@vueuse/nuxt', '@nuxt/eslint'],
+  modules: ['@pinia/nuxt', '@vueuse/nuxt', '@nuxt/eslint', '@nuxtjs/color-mode'],
+  // classSuffix: '' → applies a bare `.dark` / `.light` class on <html>, which is
+  // what main.css's `.dark { ... }` block and the `dark:` variant expect.
+  colorMode: { classSuffix: '', preference: 'dark', fallback: 'dark' },
   // components/ui/* follows shadcn-vue's convention: imported explicitly via
   // its index.ts barrel, not auto-registered (its own index.ts otherwise
   // collides with the auto-registered component name — NUXT_B3011).
