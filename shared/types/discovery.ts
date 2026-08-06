@@ -9,6 +9,7 @@ export interface Clip {
   views: string
   duration: string
   image: string
+  videoUrl: string
 }
 
 export interface LiveSignal {
@@ -28,4 +29,6 @@ export interface WatchlistItem {
   /** Short secondary line shown under the title, e.g. "02:45 · 12.4k views" or "8.4k watching". */
   meta: string
   image: string
+  /** Playable source for `kind: 'clip'`. Live channels don't have one until Phase 7. */
+  videoUrl?: string
 }

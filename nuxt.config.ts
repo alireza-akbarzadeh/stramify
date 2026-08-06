@@ -4,7 +4,12 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  css: ['~/assets/css/main.css'],
+  css: [
+    '~/assets/css/main.css',
+    'vidstack/player/styles/base.css',
+    'vidstack/player/styles/default/theme.css',
+    'vidstack/player/styles/default/layouts/video.css'
+  ],
   modules: ['@pinia/nuxt', '@vueuse/nuxt', '@nuxt/eslint', '@nuxtjs/color-mode'],
   // classSuffix: '' → applies a bare `.dark` / `.light` class on <html>, which is
   // what main.css's `.dark { ... }` block and the `dark:` variant expect.
@@ -13,6 +18,14 @@ export default defineNuxtConfig({
   // its index.ts barrel, not auto-registered (its own index.ts otherwise
   // collides with the auto-registered component name — NUXT_B3011).
   components: [{ path: '~/components', pathPrefix: false, ignore: ['ui/**'] }],
+  vue: {
+    // Vidstack's player registers real custom elements (media-player,
+    // media-provider, ...) — tell Vue's compiler to leave them as native
+    // DOM elements instead of trying to resolve them as Vue components.
+    compilerOptions: {
+      isCustomElement: (tag) => tag.startsWith('media-')
+    }
+  },
   vite: {
     plugins: [tailwindcss()]
   },

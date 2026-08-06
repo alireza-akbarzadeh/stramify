@@ -8,7 +8,7 @@ import {
   DialogRoot,
   DialogTitle
 } from 'reka-ui'
-import { Bookmark, BookmarkCheck, Play, Tv, X } from '@lucide/vue'
+import { Bookmark, BookmarkCheck, Tv, X } from '@lucide/vue'
 import type { WatchlistItem } from '#shared/types/discovery'
 import { Button } from '@/components/ui/button'
 
@@ -22,7 +22,7 @@ const emit = defineEmits<{ (e: 'close' | 'toggle-save'): void }>()
       <DialogOverlay class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" />
       <DialogContent
         v-if="item"
-        class="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_60px_-24px_var(--shadow-color)]"
+        class="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-card shadow-[0_24px_60px_-24px_var(--shadow-color)]"
       >
         <DialogTitle class="sr-only">{{ item.title }}</DialogTitle>
         <DialogDescription class="sr-only"
@@ -30,25 +30,40 @@ const emit = defineEmits<{ (e: 'close' | 'toggle-save'): void }>()
         >
 
         <div class="relative aspect-video bg-background">
-          <img :src="item.image" alt="" class="size-full object-cover" />
+          <media-player
+            v-if="item.videoUrl"
+            class="size-full"
+            :title="item.title"
+            :src="item.videoUrl"
+            :poster="item.image"
+            crossorigin
+            playsinline
+            autoplay
+          >
+            <media-provider></media-provider>
+            <media-video-layout></media-video-layout>
+          </media-player>
+          <template v-else>
+            <img :src="item.image" alt="" class="size-full object-cover" />
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span
+                class="flex size-16 items-center justify-center rounded-full bg-foreground/90 text-background"
+              >
+                <Tv class="size-6" />
+              </span>
+            </div>
+          </template>
           <DialogClose as-child>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               aria-label="Close player"
-              class="absolute right-3 top-3 rounded-full bg-background/80 hover:bg-surface-2"
+              class="absolute right-3 top-3 z-10 rounded-full bg-background/80 hover:bg-surface-2"
             >
               <X />
             </Button>
           </DialogClose>
-          <div class="absolute inset-0 flex items-center justify-center">
-            <span
-              class="flex size-16 items-center justify-center rounded-full bg-foreground text-background"
-            >
-              <Play class="size-6 fill-current" />
-            </span>
-          </div>
         </div>
 
         <div class="flex flex-wrap items-center justify-between gap-4 p-5">
@@ -68,9 +83,10 @@ const emit = defineEmits<{ (e: 'close' | 'toggle-save'): void }>()
               {{ saved ? 'In watchlist' : 'Add to watchlist' }}
             </Button>
             <span
+              v-if="!item.videoUrl"
               class="hidden items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary sm:flex"
             >
-              <Tv class="size-4" /> Ready to stream
+              <Tv class="size-4" /> Live streaming coming soon
             </span>
           </div>
         </div>

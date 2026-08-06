@@ -54,7 +54,8 @@ function clipToItem(clip: Clip): WatchlistItem {
     title: clip.title,
     creator: clip.creator,
     meta: `${clip.duration} · ${clip.views}`,
-    image: clip.image
+    image: clip.image,
+    videoUrl: clip.videoUrl
   }
 }
 
