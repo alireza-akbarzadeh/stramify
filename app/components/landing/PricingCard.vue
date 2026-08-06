@@ -36,7 +36,7 @@ defineProps<{
     </p>
     <p class="mt-3 text-sm leading-relaxed text-muted-foreground">{{ blurb }}</p>
 
-    <ul class="mt-6 space-y-3">
+    <ul class="mt-6 flex-1 space-y-3">
       <li v-for="f in features" :key="f" class="flex items-start gap-2.5 text-sm text-foreground">
         <Check class="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
         {{ f }}

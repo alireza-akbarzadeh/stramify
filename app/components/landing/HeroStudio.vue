@@ -9,7 +9,7 @@ const chat = [
   { user: 'nova_dev', color: '#22d3ee', text: 'the latency on this is unreal' },
   { user: 'kaito', color: '#7c5cff', text: 'what encoder are you running?' },
   { user: 'mira', color: '#ff4b6e', text: 'first time catching you live!' },
-  { user: 'sol', color: '#22c55e', text: 'clip that 😤' }
+  { user: 'sol', color: '#22c55e', text: 'clip that' }
 ]
 </script>
 
@@ -60,7 +60,7 @@ const chat = [
 
     <!-- Floating health stat -->
     <GlassPanel
-      class="absolute -bottom-10 -left-10 hidden w-44 p-3.5 lg:block animate-[float-slow_9s_ease-in-out_infinite_reverse] motion-reduce:animate-none"
+      class="absolute bottom-24 -left-14 hidden w-44 p-3.5 lg:block animate-[float-slow_9s_ease-in-out_infinite_reverse] motion-reduce:animate-none"
       :style="layer(46)"
     >
       <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">

@@ -23,7 +23,7 @@ const communities = [
       <span
         v-for="name in communities"
         :key="name"
-        class="whitespace-nowrap text-lg font-semibold tracking-tight text-muted-foreground/60 transition-colors duration-200 hover:text-foreground"
+        class="whitespace-nowrap text-lg font-semibold tracking-tight text-muted-foreground transition-colors duration-200 hover:text-foreground"
       >
         {{ name }}
       </span>

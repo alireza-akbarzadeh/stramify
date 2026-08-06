@@ -21,7 +21,8 @@ export function useTickingList<T>(items: T[], active: Ref<boolean>, everyMs = 16
 
   watch(active, (on) => {
     if (reduced.value === 'reduce') return
-    on ? resume() : pause()
+    if (on) resume()
+    else pause()
   })
 
   return { visible }
