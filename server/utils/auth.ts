@@ -8,20 +8,30 @@ import { sendMail } from './mailer'
 
 const appUrl = process.env.PUBLIC_APP_URL || 'http://localhost:3000'
 
-/** Only register a provider when its credentials actually exist. */
+/** Providers offered in the UI, in display order. */
+export const SOCIAL_PROVIDERS = ['google', 'apple', 'facebook', 'github'] as const
+export type SocialProvider = (typeof SOCIAL_PROVIDERS)[number]
+
+const ENV_KEYS: Record<SocialProvider, [string, string]> = {
+  google: ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'],
+  apple: ['APPLE_CLIENT_ID', 'APPLE_CLIENT_SECRET'],
+  facebook: ['FACEBOOK_CLIENT_ID', 'FACEBOOK_CLIENT_SECRET'],
+  github: ['GITHUB_CLIENT_ID', 'GITHUB_CLIENT_SECRET']
+}
+
+/**
+ * Only register a provider once its credentials exist — better-auth throws at
+ * boot on a provider configured with empty strings. `configuredProviders` is
+ * surfaced to the UI so unconfigured buttons can say so instead of failing
+ * with a cryptic OAuth error.
+ */
 function socialProviders() {
   const providers: Record<string, { clientId: string; clientSecret: string }> = {}
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    providers.google = {
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET
-    }
-  }
-  if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
-    providers.github = {
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET
-    }
+  for (const provider of SOCIAL_PROVIDERS) {
+    const [idKey, secretKey] = ENV_KEYS[provider]
+    const clientId = process.env[idKey]
+    const clientSecret = process.env[secretKey]
+    if (clientId && clientSecret) providers[provider] = { clientId, clientSecret }
   }
   return providers
 }
@@ -48,9 +58,20 @@ export const auth = betterAuth({
       })
     }
   },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendMail({
+        to: user.email,
+        subject: 'Confirm your Streamify email',
+        text: `Confirm your email address: ${url}`
+      })
+    }
+  },
   socialProviders: socialProviders(),
   plugins: [twoFactor({ issuer: 'Streamify' }), dash()]
 })
 
-/** Which social providers are configured — the UI hides the rest. */
-export const enabledSocialProviders = Object.keys(socialProviders())
+/** Which social providers have credentials — the UI marks the rest unavailable. */
+export const configuredProviders = Object.keys(socialProviders())

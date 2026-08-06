@@ -2,9 +2,11 @@
 import { Menu, X } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { useScrollHeader } from '@/composables/useScrollHeader'
+import { useAuth } from '@/composables/useAuth'
 
 const open = ref(false)
 const { scrolled, hidden } = useScrollHeader()
+const { user } = useAuth()
 
 const navLinks = [
   { label: 'Live', to: '/live' },
@@ -38,12 +40,17 @@ const navLinks = [
 
       <div class="hidden items-center gap-2 md:flex">
         <ThemeToggle />
-        <Button as-child variant="ghost" size="sm">
-          <NuxtLink to="/login">Log in</NuxtLink>
-        </Button>
-        <Button as-child size="sm">
-          <NuxtLink to="/signup">Start streaming</NuxtLink>
-        </Button>
+        <template v-if="user">
+          <UserMenu />
+        </template>
+        <template v-else>
+          <Button as-child variant="ghost" size="sm">
+            <NuxtLink to="/login">Log in</NuxtLink>
+          </Button>
+          <Button as-child size="sm">
+            <NuxtLink to="/signup">Start streaming</NuxtLink>
+          </Button>
+        </template>
       </div>
 
       <div class="flex items-center gap-2 md:hidden">
@@ -74,12 +81,22 @@ const navLinks = [
         </li>
       </ul>
       <div class="mt-3 flex flex-col gap-2 border-t border-border pt-3">
-        <Button as-child variant="outline" @click="open = false">
-          <NuxtLink to="/login">Log in</NuxtLink>
-        </Button>
-        <Button as-child @click="open = false">
-          <NuxtLink to="/signup">Start streaming</NuxtLink>
-        </Button>
+        <template v-if="user">
+          <Button as-child variant="outline" @click="open = false">
+            <NuxtLink to="/dashboard">Creator dashboard</NuxtLink>
+          </Button>
+          <Button as-child variant="ghost" @click="open = false">
+            <NuxtLink to="/settings/security">Security</NuxtLink>
+          </Button>
+        </template>
+        <template v-else>
+          <Button as-child variant="outline" @click="open = false">
+            <NuxtLink to="/login">Log in</NuxtLink>
+          </Button>
+          <Button as-child @click="open = false">
+            <NuxtLink to="/signup">Start streaming</NuxtLink>
+          </Button>
+        </template>
       </div>
     </div>
   </header>

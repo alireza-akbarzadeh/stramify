@@ -1,7 +1,11 @@
-import { enabledSocialProviders } from '../utils/auth'
+import { SOCIAL_PROVIDERS, configuredProviders } from '../utils/auth'
 
 /**
- * Lets the sign-in UI render only providers that are actually configured,
- * rather than showing buttons that would fail on click.
+ * The sign-in UI renders every provider in `all` but disables the ones missing
+ * credentials, so a half-configured deployment shows an honest "not available
+ * yet" instead of bouncing the user into a broken OAuth redirect.
  */
-export default defineEventHandler(() => ({ providers: enabledSocialProviders }))
+export default defineEventHandler(() => ({
+  all: SOCIAL_PROVIDERS,
+  configured: configuredProviders
+}))
