@@ -8,5 +8,10 @@
     </a>
     <NuxtRouteAnnouncer />
     <NuxtPage />
+    <Toaster rich-colors close-button />
   </div>
 </template>
+
+<script setup lang="ts">
+import { Toaster } from '@/components/ui/sonner'
+</script>

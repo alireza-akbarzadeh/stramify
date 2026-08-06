@@ -29,7 +29,15 @@
       "Read(//Users/alirezaakbarzadeh/Library/Caches/ms-playwright/**)",
       "Read(//Users/alirezaakbarzadeh/.cache/**)",
       "Bash(npx playwright *)",
-      "Bash(timeout 60 npx playwright test)"
+      "Bash(timeout 60 npx playwright test)",
+      "Bash(node .scratch/discovery-check.cjs)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/signup)",
+      "Bash(timeout 20 bash -c 'until curl -sf http://localhost:3000/zz-discovery-preview >/dev/null; do sleep 1; done')",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(git check-ignore *)",
+      "Bash(sed -i '' 's#zz-discovery-preview#zz-discovery-preview#' .scratch/discovery-check.cjs)",
+      "Bash(sed -i '' \"s#/_discovery-preview#/zz-discovery-preview#\" .scratch/discovery-check.cjs)"
     ]
   },
   "hooks": {

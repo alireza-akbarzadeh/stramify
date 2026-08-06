@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Lock, Mail, ShieldCheck } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui/sonner'
 import { authClient } from '@/lib/auth-client'
 
 useHead({ title: 'Log in — Streamify' })
@@ -29,6 +30,7 @@ async function onSubmit() {
 
   if (authError) {
     error.value = authError.message || 'Those credentials did not match an account.'
+    toast.error(error.value)
     return
   }
   // better-auth signals "password OK, now prove the second factor".
@@ -46,6 +48,7 @@ async function verifyTotp(code: string) {
   pending.value = false
   if (authError) {
     error.value = authError.message || 'That code was not valid. Try the next one.'
+    toast.error(error.value)
     otp.value = []
     return
   }
@@ -59,6 +62,7 @@ async function verifyBackup() {
   pending.value = false
   if (authError) {
     error.value = authError.message || 'That backup code was not valid.'
+    toast.error(error.value)
     return
   }
   await navigateTo('/')
@@ -76,7 +80,7 @@ async function verifyBackup() {
   >
     <!-- Step 1 — credentials -->
     <form v-if="step === 'credentials'" class="space-y-5" @submit.prevent="onSubmit">
-      <SocialAuthButtons @error="error = $event" />
+      <SocialAuthButtons @error="error = $event; toast.error($event)" />
 
       <AuthFormField
         id="email"

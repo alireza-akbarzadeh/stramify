@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Lock, Mail, User } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui/sonner'
 import { authClient } from '@/lib/auth-client'
 
 useHead({ title: 'Sign up — Streamify' })
@@ -29,6 +30,7 @@ async function onSubmit() {
   pending.value = false
   if (authError) {
     error.value = authError.message || 'Could not create your account.'
+    toast.error(error.value)
     return
   }
   await navigateTo('/')
@@ -38,7 +40,7 @@ async function onSubmit() {
 <template>
   <AuthLayout title="Create your channel" subtitle="Free to start. No credit card required.">
     <form class="space-y-5" @submit.prevent="onSubmit">
-      <SocialAuthButtons @error="error = $event" />
+      <SocialAuthButtons @error="error = $event; toast.error($event)" />
 
       <AuthFormField
         id="name"
