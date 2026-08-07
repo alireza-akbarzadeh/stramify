@@ -1,28 +1,19 @@
 <script setup lang="ts">
 import { ArrowLeft } from '@lucide/vue'
-import type { WatchlistItem } from '#shared/types/discovery'
 import { Button } from '@/components/ui/button'
 import { useDiscoveryCategoryClips } from '@/composables/useDiscoveryCategoryClips'
 import { useWatchlist } from '@/composables/useWatchlist'
 import { clipToItem } from '@/utils/watchlist'
 import ClipCard from './ClipCard.vue'
-import ClipPlayerModal from './ClipPlayerModal.vue'
 
 const props = defineProps<{ slug: string }>()
 
 const { data, isPending, isError, error, refetch } = useDiscoveryCategoryClips(() => props.slug)
 const { isSaved, toggle } = useWatchlist()
 
-const selectedItem = ref<WatchlistItem | null>(null)
-
 const category = computed(() => data.value?.category ?? null)
 const clips = computed(() => data.value?.clips ?? [])
 const notFound = computed(() => (error.value as { statusCode?: number } | null)?.statusCode === 404)
-const selectedSaved = computed(() => (selectedItem.value ? isSaved(selectedItem.value.id) : false))
-
-function toggleSelected() {
-  if (selectedItem.value) toggle(selectedItem.value)
-}
 </script>
 
 <template>
@@ -86,7 +77,7 @@ function toggleSelected() {
           <ClipCard
             :clip="clip"
             :saved="isSaved(clip.id)"
-            @play="selectedItem = clipToItem(clip)"
+            @play="navigateTo(`/watch/${encodeURIComponent(clip.id)}`)"
             @toggle-save="toggle(clipToItem(clip))"
           />
         </Reveal>
@@ -98,12 +89,5 @@ function toggleSelected() {
         </p>
       </div>
     </template>
-
-    <ClipPlayerModal
-      :item="selectedItem"
-      :saved="selectedSaved"
-      @close="selectedItem = null"
-      @toggle-save="toggleSelected"
-    />
   </div>
 </template>

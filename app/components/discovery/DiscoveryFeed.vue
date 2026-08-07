@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Search, X } from '@lucide/vue'
-import type { ClipCategory, LiveSignal, WatchlistItem } from '#shared/types/discovery'
+import type { Clip, ClipCategory, LiveSignal, WatchlistItem } from '#shared/types/discovery'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useDiscoveryClips } from '@/composables/useDiscoveryClips'
@@ -11,7 +11,6 @@ import FeaturedClip from './FeaturedClip.vue'
 import LiveSignalsRail from './LiveSignalsRail.vue'
 import ClipGrid from './ClipGrid.vue'
 import WatchlistPanel from './WatchlistPanel.vue'
-import ClipPlayerModal from './ClipPlayerModal.vue'
 
 type Category = ClipCategory | 'All Clips'
 
@@ -27,7 +26,6 @@ const { items: saved, hydrated, isSaved, toggle, remove, clear } = useWatchlist(
 const view = ref<'feed' | 'watchlist'>('feed')
 const search = ref('')
 const activeCategory = ref<Category>('All Clips')
-const selectedItem = ref<WatchlistItem | null>(null)
 
 const clips = computed(() => clipsData.value?.clips ?? [])
 const featured = computed(() => clipsData.value?.featured ?? null)
@@ -46,22 +44,20 @@ const filteredClips = computed(() => {
 
 const savedClips = computed(() => saved.value.filter((item) => item.kind === 'clip'))
 const savedLive = computed(() => saved.value.filter((item) => item.kind === 'live'))
-const selectedSaved = computed(() => (selectedItem.value ? isSaved(selectedItem.value.id) : false))
 
-function toggleSelected() {
-  if (selectedItem.value) toggle(selectedItem.value)
-}
-
-/** Live channels get a real page now (`/live/[username]`); clips stay in the in-place preview modal. */
+/**
+ * Everything playable now has a URL — `/watch/[slug]`, where the slug is a
+ * clip's id or a channel's handle (ADR-014). Watchlist entries store the id
+ * for clips and the creator handle for live, matching that resolution order.
+ */
 function openSaved(item: WatchlistItem) {
-  if (item.kind === 'live') {
-    navigateTo(`/live/${encodeURIComponent(item.creator)}`)
-    return
-  }
-  selectedItem.value = item
+  navigateTo(`/watch/${encodeURIComponent(item.kind === 'live' ? item.creator : item.id)}`)
 }
 function openLive(signal: LiveSignal) {
-  navigateTo(`/live/${encodeURIComponent(signal.name)}`)
+  navigateTo(`/watch/${encodeURIComponent(signal.name)}`)
+}
+function openClip(clip: Clip) {
+  navigateTo(`/watch/${encodeURIComponent(clip.id)}`)
 }
 </script>
 
@@ -153,7 +149,7 @@ function openLive(signal: LiveSignal) {
         class="mb-12"
         :clip="featured"
         :saved="isSaved(featured.id)"
-        @play="selectedItem = clipToItem(featured)"
+        @play="openClip(featured)"
         @toggle-save="toggle(clipToItem(featured))"
       />
 
@@ -177,16 +173,9 @@ function openLive(signal: LiveSignal) {
         v-model:active-category="activeCategory"
         :clips="filteredClips"
         :is-saved="isSaved"
-        @play="selectedItem = clipToItem($event)"
+        @play="openClip"
         @toggle-save="toggle(clipToItem($event))"
       />
     </template>
-
-    <ClipPlayerModal
-      :item="selectedItem"
-      :saved="selectedSaved"
-      @close="selectedItem = null"
-      @toggle-save="toggleSelected"
-    />
   </div>
 </template>

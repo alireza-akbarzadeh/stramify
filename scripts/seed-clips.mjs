@@ -18,6 +18,8 @@ const clips = [
     title: 'The Midnight Echo: Unrehearsed Encore at Tokyo Dome',
     creator: 'EchoCollective',
     category: 'Music',
+    description:
+      'The encore nobody expected. Three songs, no setlist, one take — recorded on the final night of the Tokyo Dome run.\n\nShot on four handhelds and mixed from the desk feed. The full set drops next week.',
     // Mux's public HLS test stream (adaptive bitrate) — shows off the
     // player's HLS support on the flagship featured clip.
     videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
@@ -32,6 +34,8 @@ const clips = [
     title: 'The Perfect Triple-Kill Flank',
     creator: 'GhostOperator',
     category: 'Gaming',
+    description:
+      'Rotated wide, held the corridor nobody checks, and collected three before the smoke cleared.\n\nNo comms, no setup — just map knowledge and a very patient thirty seconds.',
     videoUrl: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
     thumbnailUrl: placeholder('triple-kill'),
     durationSeconds: 33,
@@ -44,6 +48,8 @@ const clips = [
     title: 'Modular Synthesis Peak Moment',
     creator: 'Patch_Bay',
     category: 'Music',
+    description:
+      'Sixty seconds of a patch finally clicking into place. The filter sweep at the end was not planned.\n\nPatch notes in the pinned comment once I can remember what I did.',
     videoUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
     thumbnailUrl: placeholder('modular-synthesis'),
     durationSeconds: 60,
@@ -56,6 +62,8 @@ const clips = [
     title: 'Rendering the Final Details',
     creator: 'Canvas_Queen',
     category: 'Creative',
+    description:
+      'The last pass before export: rim light, dust, and the tiny grain that makes the whole frame sit right.',
     videoUrl: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
     thumbnailUrl: placeholder('rendering-details'),
     durationSeconds: 52,
@@ -68,6 +76,8 @@ const clips = [
     title: 'Chasing the Golden Hour Light',
     creator: 'Sky_High',
     category: 'Creative',
+    description:
+      'Twenty minutes of setup for thirty seconds of light. Worth it every single time.',
     videoUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4',
     thumbnailUrl: placeholder('golden-hour'),
     durationSeconds: 30,
@@ -80,6 +90,8 @@ const clips = [
     title: 'Dirt to Street in Under a Minute',
     creator: 'Subaru_Nomad',
     category: 'Gaming',
+    description:
+      'Full stage transition without lifting off. The gravel section is where most runs die — this one held.',
     videoUrl: 'https://media.w3.org/2010/05/video/movie_300.mp4',
     thumbnailUrl: placeholder('street-run'),
     durationSeconds: 60,
@@ -92,6 +104,7 @@ const clips = [
     title: 'Forging the Final Cut',
     creator: 'Canvas_Queen',
     category: 'Creative',
+    description: 'No undo, no hesitation. Ten years of ruining paper condensed into thirty seconds.',
     videoUrl: 'https://test-streams.mux.dev/pts_shift/master.m3u8',
     thumbnailUrl: placeholder('steel-forge'),
     durationSeconds: 30,
@@ -104,17 +117,18 @@ const clips = [
 for (const clip of clips) {
   await sql`
     insert into clips (
-      id, title, creator, category, video_url, thumbnail_url,
+      id, title, creator, category, description, video_url, thumbnail_url,
       duration_seconds, views, featured, created_at
     ) values (
       ${clip.id}, ${clip.title}, ${clip.creator}, ${clip.category},
-      ${clip.videoUrl}, ${clip.thumbnailUrl}, ${clip.durationSeconds},
-      ${clip.views}, ${clip.featured}, ${clip.createdAt}
+      ${clip.description}, ${clip.videoUrl}, ${clip.thumbnailUrl},
+      ${clip.durationSeconds}, ${clip.views}, ${clip.featured}, ${clip.createdAt}
     )
     on conflict (id) do update set
       title = excluded.title,
       creator = excluded.creator,
       category = excluded.category,
+      description = excluded.description,
       video_url = excluded.video_url,
       thumbnail_url = excluded.thumbnail_url,
       duration_seconds = excluded.duration_seconds,

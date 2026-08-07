@@ -13,6 +13,10 @@ export const clips = pgTable('clips', {
   title: text('title').notNull(),
   creator: text('creator').notNull(),
   category: clipCategoryEnum('category').notNull(),
+  // Nullable: added for the watch page (ADR-014) after rows already existed,
+  // and creator uploads won't always carry one. The UI renders an explicit
+  // "No description provided" rather than a blank block.
+  description: text('description'),
   videoUrl: text('video_url').notNull(),
   thumbnailUrl: text('thumbnail_url').notNull(),
   durationSeconds: integer('duration_seconds').notNull(),

@@ -6,7 +6,7 @@
 > have advanced it. See the concurrent-session note below for why that
 > caution is not hypothetical.
 
-**Last updated**: 2026-08-06.
+**Last updated**: 2026-08-07.
 
 > **This file drifted badly between 2026-08-05 and 2026-08-06** — it still
 > said "Phase 0 done, no `package.json`, no Nuxt scaffold" while the repo
@@ -78,6 +78,29 @@ deliverable is actually complete vs. scaffolded) — don't take low-numbered
   advances on both an HLS and an mp4 channel, single column with no
   horizontal overflow at 375×812, no console errors. See ADR-013 and
   [video-streaming.md](./video-streaming.md).
+- **Watch page (`/watch/[slug]`) — built 2026-08-07, see ADR-014 / ADR-015 and
+  [watch-page.md](./watch-page.md)**. One page for both content kinds: the
+  slug resolves against `clips.id` first, then `live_streams.streamer_name`
+  (case-insensitive). Player + title/meta + channel bar with a real Follow
+  button + like/dislike + share + save + collapsible description, then
+  **read-only comments** for clips and **live chat** for streams, plus a
+  category-based up-next rail. Sidebar sits right at `lg` and stacks below
+  the video underneath it.
+  - Four new tables (migration `0003_*`): `comments`, `chat_messages`,
+    `reactions`, `follows`. Plus a nullable `description` on `clips` and
+    `live_streams`. Seeded by `npm run db:seed` (now runs clips → live →
+    comments → chat; **order matters**, the last two have FKs).
+  - Nine endpoints under `server/api/watch/[slug]/` and
+    `server/api/channels/[name]/`. Writes go through `requireUser`
+    (`server/utils/session.ts`).
+  - Chat is real but **not yet realtime** — persisted messages over REST,
+    polled every 5s while the tab is visible (ADR-015). Phase 8 swaps the
+    interval for crossws with no UI change.
+  - `ClipPlayerModal.vue` and `LiveChannelView.vue` were **deleted** — every
+    call site now navigates to `/watch/…`. `/live/[username]` is a redirect.
+  - Known gaps, deliberate: comments can't be posted; up-next is
+    category-only (no recommender); live viewer counts stay static (Phase 7);
+    `follows.channel` is a text handle because there's no `channels` table.
 - The "Live Signals" rail on `/clips` consumes that same endpoint, so it now
   shows real rows too (`LiveSignal` gained `title`/`category`/`uptime`/
   `videoUrl` additively). Still Phase 7 and unbuilt: RTMPS ingest, stream
@@ -162,10 +185,16 @@ full picture.
    full `DESIGN_SYSTEM.md`/phase audit). Worth a direct conversation with
    the user rather than assuming either way.
 2. If continuing feature work: live *ingest* (Phase 7) is the natural next
-   vertical slice now that clips play real video and `/live` lists real
-   channels from a real table (ADR-013) — ingest strategy, RTMPS/stream
-   keys, per-channel `/live/[username]` pages, live chat, and realtime
-   viewer counts are all still unbuilt.
+   vertical slice now that clips play real video, `/live` lists real
+   channels from a real table (ADR-013), and every playable thing has a
+   watch page (ADR-014) — ingest strategy, RTMPS/stream keys, and realtime
+   viewer counts are all still unbuilt. Phase 8's crossws chat now has a
+   concrete landing spot: swap `useWatchChat`'s `refetchInterval` for a
+   socket and add a Redis publish to `chat.post.ts` (ADR-015).
+   Two smaller follow-ons the watch page opened up: enabling comment
+   posting (the `comments` table is already shaped for it — one endpoint,
+   no migration), and `/following`, which is still a `ComingSoon`
+   placeholder even though the `follows` table now exists and is populated.
 3. If closing the documentation gap: audit `dashboard/*`, `live.vue`,
    `following.vue`, `category/index.vue` against PROMPT.md's definition of
    done (§20 point 4 in CLAUDE.md — loading/empty/error states, real

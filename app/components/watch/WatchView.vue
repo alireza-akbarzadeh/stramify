@@ -1,0 +1,148 @@
+<script setup lang="ts">
+import { ArrowLeft } from '@lucide/vue'
+import { toast } from 'vue-sonner'
+import type { CommentSort, ReactionValue, RelatedItem } from '#shared/types/watch'
+import { Button } from '@/components/ui/button'
+import { useWatchTarget, useWatchRelated } from '@/composables/useWatchTarget'
+import { useWatchComments } from '@/composables/useWatchComments'
+import { useWatchChat } from '@/composables/useWatchChat'
+import { useChannelFollow, useWatchReaction } from '@/composables/useWatchEngagement'
+import { useViewCounter } from '@/composables/useViewCounter'
+import { useAuth } from '@/composables/useAuth'
+import { useWatchlist } from '@/composables/useWatchlist'
+import { relatedToItem, watchTargetToItem } from '@/utils/watchlist'
+import WatchLayout from './WatchLayout.vue'
+import WatchSkeleton from './WatchSkeleton.vue'
+
+const props = defineProps<{ slug: string }>()
+const slug = computed(() => props.slug)
+
+const target = useWatchTarget(slug)
+const related = useWatchRelated(slug)
+const isLive = computed(() => target.data.value?.kind === 'live')
+const isClip = computed(() => target.data.value?.kind === 'clip')
+
+const sort = ref<CommentSort>('top')
+const comments = useWatchComments(slug, sort, isClip)
+const chat = useWatchChat(slug, isLive)
+
+const channelName = computed(() => target.data.value?.channel ?? '')
+const { reactions, toggle: react } = useWatchReaction(slug)
+const { channel, toggle: follow } = useChannelFollow(channelName)
+const { count } = useViewCounter(slug)
+const { user } = useAuth()
+const { isSaved, toggle: toggleSave } = useWatchlist()
+
+const notFound = computed(
+  () => (target.error.value as { statusCode?: number } | null)?.statusCode === 404
+)
+const saved = computed(() => (target.data.value ? isSaved(target.data.value.id) : false))
+
+const engagement = computed(() => ({
+  channel: channel.value,
+  reactions: reactions.value,
+  saved: saved.value,
+  reactPending: react.isPending.value,
+  followPending: follow.isPending.value
+}))
+const relatedPanel = computed(() => ({
+  items: related.data.value ?? [],
+  pending: related.isPending.value,
+  errored: related.isError.value
+}))
+const commentsPanel = computed(() => ({
+  items: comments.data.value ?? [],
+  pending: comments.isPending.value,
+  errored: comments.isError.value
+}))
+const chatPanel = computed(() => ({
+  items: chat.messages.value,
+  pending: chat.query.isPending.value,
+  errored: chat.query.isError.value,
+  canPost: !!user.value,
+  sending: chat.send.isPending.value
+}))
+
+useHead({
+  title: computed(() => (target.data.value ? `${target.data.value.title} — Streamify` : 'Streamify'))
+})
+
+function onSave() {
+  if (target.data.value) toggleSave(watchTargetToItem(target.data.value))
+}
+function onReact(value: ReactionValue) {
+  if (!user.value) return toast.error('Log in to react to this video.')
+  react.mutate(value)
+}
+function onFollow() {
+  if (!user.value) return toast.error('Log in to follow this channel.')
+  follow.mutate()
+}
+function onSendChat(body: string) {
+  chat.send.mutate(body, { onError: () => toast.error("Couldn't send that message.") })
+}
+function onShare() {
+  navigator.clipboard
+    .writeText(window.location.href)
+    .then(() => toast.success('Link copied to clipboard'))
+    .catch(() => toast.error("Couldn't copy the link"))
+}
+function onSaveRelated(item: RelatedItem) {
+  toggleSave(relatedToItem(item))
+}
+</script>
+
+<template>
+  <div class="mx-auto mt-12 max-w-[1560px] px-4 py-8 sm:px-8">
+    <WatchSkeleton v-if="target.isPending.value" />
+
+    <div
+      v-else-if="notFound"
+      class="rounded-xl border border-dashed border-border py-20 text-center"
+    >
+      <p class="text-sm font-semibold uppercase tracking-wide text-primary">Not available</p>
+      <h1 class="mt-2 text-2xl font-semibold text-foreground">We couldn't find that video</h1>
+      <p class="mt-3 text-sm text-muted-foreground">
+        It may have been removed, or the channel isn't live right now.
+      </p>
+      <Button as-child class="mt-6" size="sm">
+        <NuxtLink to="/live">
+          <ArrowLeft />
+          Browse live channels
+        </NuxtLink>
+      </Button>
+    </div>
+
+    <div
+      v-else-if="target.isError.value"
+      class="rounded-xl border border-dashed border-destructive/40 py-20 text-center"
+    >
+      <h1 class="text-lg font-semibold text-foreground">Couldn't load this video</h1>
+      <p class="mt-2 text-sm text-muted-foreground">Something went wrong on our side.</p>
+      <Button type="button" variant="outline" size="sm" class="mt-4" @click="target.refetch()">
+        Retry
+      </Button>
+    </div>
+
+    <WatchLayout
+      v-else-if="target.data.value"
+      v-model:sort="sort"
+      :target="target.data.value"
+      :engagement="engagement"
+      :related="relatedPanel"
+      :comments="commentsPanel"
+      :chat="chatPanel"
+      :is-saved="isSaved"
+      @play-start="count()"
+      @react="onReact"
+      @toggle-save="onSave"
+      @share="onShare"
+      @toggle-follow="onFollow"
+      @send-chat="onSendChat"
+      @toggle-save-related="onSaveRelated"
+      @retry-related="related.refetch()"
+      @retry-comments="comments.refetch()"
+      @retry-chat="chat.query.refetch()"
+    />
+  </div>
+</template>

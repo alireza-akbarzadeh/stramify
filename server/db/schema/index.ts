@@ -1,3 +1,7 @@
 export * from './auth'
 export * from './clips'
 export * from './live-streams'
+export * from './comments'
+export * from './chat-messages'
+export * from './reactions'
+export * from './follows'

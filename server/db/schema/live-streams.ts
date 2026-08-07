@@ -14,6 +14,8 @@ export const liveStreams = pgTable('live_streams', {
   streamerName: text('streamer_name').notNull(),
   title: text('title').notNull(),
   category: clipCategoryEnum('category').notNull(),
+  // Nullable for the same reason as `clips.description` — see ADR-014.
+  description: text('description'),
   videoUrl: text('video_url').notNull(),
   thumbnailUrl: text('thumbnail_url').notNull(),
   viewerCount: integer('viewer_count').notNull().default(0),

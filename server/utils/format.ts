@@ -1,12 +1,14 @@
+// `formatCount` lives in `shared/` because the watch page's like button
+// re-formats counts client-side after an optimistic update. Re-exported here
+// so every existing server import keeps working unchanged. Imported by
+// relative path, not the `#shared` alias, because `format.spec.ts` runs in
+// the plain vitest environment where Nuxt's aliases aren't applied.
+export { formatCount } from '../../shared/utils/format'
+
 export function formatDuration(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60)
   const seconds = totalSeconds % 60
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-}
-
-export function formatCount(count: number): string {
-  if (count < 1000) return String(count)
-  return `${(count / 1000).toFixed(1).replace(/\.0$/, '')}k`
 }
 
 /**

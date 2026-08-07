@@ -393,3 +393,134 @@ Cloudflare Stream lands, point `live_streams.video_url` at live-playback
 HLS manifests and drive `viewer_count` from the realtime layer; no schema,
 API-contract, or component change is needed. `/live/[username]` channel
 pages and live chat remain unbuilt on purpose.
+
+## ADR-014: One `/watch/[slug]` page for clips and live; `/live/[username]` superseded
+
+**Context**: Clips had no URL at all — they played in `ClipPlayerModal`, an
+overlay opened from the discovery grid, so a clip could not be linked,
+shared, or deep-linked. Live channels had `/live/[username]`
+(`LiveChannelView.vue`), which was a player, one metadata row, a save
+button, and four "more live now" cards. Neither surface had comments,
+chat, likes, follows, or a recommendation rail. The product needs a real
+destination page — the thing every competitor calls a watch page.
+
+The open question was whether that is one page or two. Clips and live
+sessions differ in exactly four ways: a view count vs a concurrent viewer
+count, a publish date vs an uptime, a duration vs none, and comments vs
+chat. Everything else — player, title, channel bar, follow, like, share,
+save, description, up-next rail — is identical.
+
+**Decision**: One page, `/watch/[slug]`, serving both.
+
+1. `WatchTarget` (`shared/types/watch.ts`) is a union discriminated on
+   `kind: 'clip' | 'live'`, so the page branches once at the top instead of
+   null-checking live-only fields everywhere.
+2. **Slug resolution** (`server/utils/watch.ts`, `resolveWatchTarget`):
+   match `clips.id` exactly, then `live_streams.streamer_name`
+   case-insensitively. The namespaces cannot collide by construction — clip
+   ids are prefixed slugs (`clip-midnight-echo`), live slugs are streamer
+   handles (`Viper_Squadron`) — so no `c/` `l/` prefix scheme is needed. A
+   miss is a 404, which the page renders as a real "we couldn't find that
+   video" state.
+3. `/live/[username]` becomes a `definePageMeta` redirect to
+   `/watch/[username]` rather than being deleted: a channel's handle *is*
+   its watch slug, so existing links, bookmarks, and `e2e/live.spec.ts`
+   keep working. `LiveChannelView.vue` and `ClipPlayerModal.vue` lost all
+   call sites and were deleted.
+4. Four new tables (migration `0003_*`): `comments`, `chat_messages`
+   (ADR-015), `reactions`, `follows`. Plus a nullable `description` column
+   on `clips` and `live_streams` — nullable because rows already existed
+   and creator uploads won't always carry one; the UI says "No description
+   provided" rather than rendering an empty block.
+5. **Comments are read-only** in this release (seeded via
+   `scripts/seed-comments.mjs`, served by `GET /api/watch/[slug]/comments`,
+   one level of replies, Top/Newest sort). The UI states this in plain
+   words instead of showing a disabled composer that implies posting works.
+   `comments.user_id` is nullable *alongside* a non-null `author_name`, so
+   enabling posting later is an endpoint, not a migration.
+6. `reactions` uses one table with `target_id` + `target_kind` rather than
+   two near-identical tables or two nullable FKs. Cost: no referential
+   integrity on `target_id`. Benefit: one toggle endpoint, one query path.
+   The unique `(user_id, target_id)` constraint is what makes the toggle
+   safe — switching like → dislike is an upsert, so a fast double-click
+   cannot leave a user holding both.
+7. `follows.channel` is a **text handle, not a foreign key**, because there
+   is no `channels` table — `clips.creator` and `live_streams.streamer_name`
+   are the only channel identity in the schema, and both are free text.
+   Channel summaries (`server/utils/channels.ts`) are derived at query time,
+   the same pattern ADR-012 established for categories.
+8. `POST /api/watch/[slug]/view` increments `clips.views`, debounced to once
+   per slug per browser session in `useViewCounter`. It is a deliberate
+   **no-op for live**: `live_streams.viewer_count` is concurrent viewers,
+   not cumulative views, and a counter that only goes up would misrepresent
+   how many people are actually watching. Real concurrency is Phase 7.
+9. `formatCount` moved from `server/utils/format.ts` to
+   `shared/utils/format.ts` (the server file re-exports it, so no import
+   changed) because the like button re-formats counts client-side after an
+   optimistic update, and two implementations would have drifted.
+
+**Rejected**: Two separate pages — would have duplicated the player,
+channel bar, actions, description, and rail, then drifted. Prefixed slugs
+(`/watch/c/<id>`, `/watch/l/<handle>`) — solves a collision that cannot
+happen and makes every link uglier. A `channels` table in this change —
+real, but it needs creator accounts and ownership rules that belong to
+Phase 9; deriving from the handle ships the follow button now and converts
+to an FK in one migration later. Keeping `ClipPlayerModal` as a
+quick-preview affordance — two ways to watch the same clip, one of which
+has no URL.
+
+**Consequences**: `npm run db:migrate && npm run db:seed` is required after
+pulling this. Renaming a channel orphans its follower rows until a
+`channels` table exists. Recommendations in the up-next rail are
+category-only — there is no watch history or recommender, and inventing a
+relevance score off nothing would have been theatre. Every discovery
+surface (`DiscoveryFeed`, `CategoryDetail`, `LiveDirectory`,
+`LiveSignalsRail`, `WatchlistPanel`) now navigates to `/watch/…`.
+
+## ADR-015: Live chat ships over REST + polling, not WebSockets (Phase 8 precursor)
+
+**Context**: A live watch page without chat is not a live watch page. But
+the realtime stack chosen in ADR-006 — Nitro crossws + Redis pub/sub — is
+Phase 8, needs a running Redis, and needs a deployment target that holds a
+long-lived Node process (still an open question in PROGRESS.md). Building
+it now would pull an entire unbuilt phase into a page-level feature.
+
+The tempting shortcut — render a chat panel filled with scripted messages
+on a timer — is exactly the "never fake realtime/streaming behavior" rule
+in CLAUDE.md §20 point 2.
+
+**Decision**: Ship chat as genuinely real, just not yet realtime.
+
+1. A real `chat_messages` table. `POST /api/watch/[slug]/chat` requires a
+   session (`requireUser`, 401 otherwise), validates the body with Zod
+   (1–200 chars), and inserts. Messages persist and survive reload.
+2. `GET /api/watch/[slug]/chat` takes `?since=<iso>` so a poll returns only
+   newer rows; `mergeChatMessages` (`app/utils/chat.ts`) dedupes by id and
+   re-sorts, which is also what reconciles an optimistic local message with
+   the same message coming back from the server.
+3. `useWatchChat` polls every 5s **only while the tab is visible**
+   (`useDocumentVisibility`) — nobody reads a background tab, and an idle
+   stream page should not hammer the database all afternoon.
+4. Seeded backlog (`scripts/seed-chat.mjs`) has `user_id: null` and renders
+   identically to a real message. Chat is real; it just starts with history.
+
+The swap path is deliberately narrow: Phase 8 keeps the insert in
+`chat.post.ts` and adds a Redis publish, and `useWatchChat` trades its
+`refetchInterval` for a crossws subscription. Subscribers receive the same
+`ChatMessage` shape, so `WatchChat.vue` is untouched.
+
+**Rejected**: Building crossws + Redis now — drags all of Phase 8 into this
+task and needs infrastructure decisions that aren't made. Server-Sent
+Events as a halfway house — a second transport to write and then throw
+away when WebSockets land, since chat needs a client→server channel
+anyway. Scripted/simulated messages — forbidden, and worse than an empty
+panel. Read-only chat — chat without sending is just a comment list.
+
+**Consequences**: Messages appear up to 5s late; this is visible and
+accepted. Polling cost scales with concurrent viewers on a live page,
+which is fine at seed scale and is precisely what Phase 8 fixes. The
+5s interval and the 200-message client buffer (`CHAT_BUFFER_LIMIT`) are
+the two knobs if that changes before Phase 8 lands. Unlike comments (which
+are read-only per ADR-014), chat accepts posts — the asymmetry is
+deliberate: a live stream is worthless without a back-channel, a VOD is
+not.

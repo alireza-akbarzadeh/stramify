@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Play, Users } from '@lucide/vue'
 import type { LiveSignal } from '#shared/types/discovery'
 import LiveBadge from '@/components/landing/LiveBadge.vue'
+import { Play, Users } from '@lucide/vue'
 import SaveButton from './SaveButton.vue'
 
 defineProps<{ signal: LiveSignal; saved: boolean }>()
@@ -9,7 +9,7 @@ const emit = defineEmits<{ (e: 'play' | 'toggle-save'): void }>()
 </script>
 
 <template>
-  <article class="group space-y-3">
+  <article class="group space-y-3 cursor-pointer">
     <div class="relative">
       <button
         type="button"

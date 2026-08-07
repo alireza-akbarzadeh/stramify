@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Search, X } from '@lucide/vue'
 import type { LiveSignal } from '#shared/types/discovery'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,6 +6,7 @@ import { useLiveSignals } from '@/composables/useLiveSignals'
 import { useWatchlist } from '@/composables/useWatchlist'
 import { filterLiveSignals, type LiveCategory } from '@/utils/live'
 import { liveToItem } from '@/utils/watchlist'
+import { Search, X } from '@lucide/vue'
 import LiveChannelGrid from './LiveChannelGrid.vue'
 
 const { data, isPending, isError, refetch } = useLiveSignals()
@@ -19,7 +19,7 @@ const signals = computed(() => data.value ?? [])
 const visible = computed(() => filterLiveSignals(signals.value, activeCategory.value, search.value))
 
 function open(signal: LiveSignal) {
-  navigateTo(`/live/${encodeURIComponent(signal.name)}`)
+  navigateTo(`/watch/${encodeURIComponent(signal.name)}`)
 }
 </script>
 
