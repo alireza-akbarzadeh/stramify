@@ -321,3 +321,75 @@ required for `media-player`/`media-provider`/`media-video-layout` to
 type-check in `.vue` templates — vidstack ships this augmentation itself,
 it just isn't picked up automatically without an import somewhere in the
 TS program.
+
+---
+
+## ADR-013: Real `live_streams` table backs `/live`; `LiveSignal` extended
+
+**Context**: `/live` was a `ComingSoon` placeholder and the "Live Signals"
+rail on `/clips` was served from `server/utils/fixtures/discovery.ts` — a
+hard-coded array shaped like the eventual response. That was acceptable
+while nothing presented live channels as usable, but a real "who's live
+now" directory page cannot ship on fixtures without violating CLAUDE.md's
+"no fake functionality / never fake realtime or streaming behavior" rule
+(§20 point 2) — the same gap ADR-012 closed for clips. The real ingest
+path (RTMPS → Cloudflare Stream, ADR-005) is Phase 7 and still unbuilt
+(`CLOUDFLARE_STREAM_API_TOKEN` remains empty in `.env`), so the choice was
+between shipping the directory on fixtures or on a real table with real
+playable sources.
+
+**Decision**: Follow the ADR-012 precedent exactly, scoped to the live
+directory only (`/following` and `/category`'s ComingSoon status, per-channel
+`/live/[username]` pages, and live chat are all untouched):
+
+1. Added a real `live_streams` table (`server/db/schema/live-streams.ts`) —
+   `streamerName`, `title`, `category` (**reusing** `clipCategoryEnum` from
+   `clips.ts` rather than declaring a second identical Postgres enum type),
+   `videoUrl`, `thumbnailUrl`, `viewerCount`, `startedAt` (when the session
+   went live — drives the uptime display), `createdAt`. Migration
+   `0002_noisy_lady_deathstrike.sql`, applied to the Neon database.
+2. `scripts/seed-live-streams.mjs` (npm script `db:seed:live`; `db:seed` now
+   runs clips + live) seeds 8 channels across the three categories with
+   curl-verified, freely-licensed sources — Mux's public HLS test streams
+   (`test-streams.mux.dev`, `stream.mux.com`), W3C's `media.w3.org` assets,
+   and MDN's CC0 set. HLS is preferred here because Cloudflare Stream live
+   playback delivers HLS manifests, so the swap later is a data change only.
+   Google's `gtv-videos-bucket` set stays banned (403s, see ADR-012).
+3. `server/api/discovery/live.get.ts` now queries the table via Drizzle
+   ordered by `viewerCount desc` (busiest channels first) and maps rows
+   through `toLiveSignal` in `server/utils/discovery.ts`, next to the
+   `toClip` mapper. `server/utils/fixtures/discovery.ts` was deleted (the
+   whole `fixtures/` directory is gone — nothing else imported it).
+4. `LiveSignal` (`shared/types/discovery.ts`) grew `title`, `category`,
+   `uptime`, and `videoUrl` alongside the existing `id`/`name`/`viewers`/
+   `image`. Purely additive, so `LiveSignalsRail.vue` on `/clips` kept
+   working unchanged and now renders real rows. A new `formatUptime`
+   (`server/utils/format.ts`) renders `startedAt` as `"9m"` / `"3h 17m"` —
+   deliberately not `formatAge`'s `"3h ago"`, since uptime is a duration,
+   not an age, and stays minute-precise past the hour.
+5. `WatchlistItem.videoUrl` is still optional, but live items now always
+   carry one, so the player modal's "no source" fallback copy changed from
+   "Live streaming coming soon" (now false) to "Playback source
+   unavailable" — it only ever shows for watchlist entries saved to
+   localStorage before this change.
+
+**Rejected**: Keeping `/live` on `ComingSoon` until Phase 7 — leaves a
+whole nav entry dead while the data model needed for it is trivial and
+already precedented. A separate `live_category` Postgres enum — duplicate
+type for identical values; the categories are one product concept, and
+`shared/utils/category.ts` already treats `CLIP_CATEGORIES` as the single
+source of truth for both sides of the wire. A dedicated `LivePlayerModal`
+— `ClipPlayerModal` already takes a `WatchlistItem` with an opaque
+`videoUrl`, so live channels reuse it as-is. Faking a ticking viewer count
+client-side — that's exactly the "fake realtime" the rules forbid; real
+viewer counts arrive with the WebSocket/Redis work (ADR-006).
+
+**Consequences**: `npm run db:seed` must be re-run after `db:migrate` on a
+fresh database to get live channels as well as clips. Viewer counts and
+`startedAt` are static seed values until Phase 7 wires real ingest and the
+realtime counter — uptime therefore grows monotonically from the seed time
+(re-run `npm run db:seed:live` to reset it to fresh-looking values). When
+Cloudflare Stream lands, point `live_streams.video_url` at live-playback
+HLS manifests and drive `viewer_count` from the realtime layer; no schema,
+API-contract, or component change is needed. `/live/[username]` channel
+pages and live chat remain unbuilt on purpose.

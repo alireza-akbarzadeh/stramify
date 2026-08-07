@@ -62,16 +62,33 @@ deliverable is actually complete vs. scaffolded) — don't take low-numbered
   `server/utils/discovery.ts` holds the shared `toClip` mapper. Covered by
   `CategoryCard.spec.ts`, `shared/utils/category.spec.ts`, and
   `e2e/category.spec.ts` (all green against the seeded Neon DB).
-- Live signals (the "Live Signals" rail on `/clips`) and the rest of
-  `/live` are **still on fixture data** (`server/utils/fixtures/discovery.ts`
-  → `liveSignals`) — out of scope for this session, real live streaming is
-  Phase 7.
+- **Live directory (`/live`) — real, verified end to end**: no more
+  `ComingSoon` placeholder and **no fixtures anywhere in discovery**
+  (`server/utils/fixtures/` is deleted). Real `live_streams` Postgres table
+  (`server/db/schema/live-streams.ts`, migration
+  `0002_noisy_lady_deathstrike.sql`, reusing `clipCategoryEnum`), seeded by
+  `npm run db:seed:live` with 8 channels on curl-verified freely-licensed
+  HLS/mp4 sources. `/api/discovery/live` queries it ordered by viewer count
+  and formats `"8.4k watching"` / uptime `"3h 17m"` (`formatUptime`, new in
+  `server/utils/format.ts`). UI: `app/components/discovery/LiveDirectory.vue`
+  → `LiveChannelGrid.vue` → `LiveChannelCard.vue` with search, category
+  tabs, skeleton/empty/error states, `useWatchlist()` save (kind `'live'`),
+  and real playback through the shared `ClipPlayerModal`. Verified in a real
+  browser: 8 cards render, category/search filtering works, `currentTime`
+  advances on both an HLS and an mp4 channel, single column with no
+  horizontal overflow at 375×812, no console errors. See ADR-013 and
+  [video-streaming.md](./video-streaming.md).
+- The "Live Signals" rail on `/clips` consumes that same endpoint, so it now
+  shows real rows too (`LiveSignal` gained `title`/`category`/`uptime`/
+  `videoUrl` additively). Still Phase 7 and unbuilt: RTMPS ingest, stream
+  keys, per-channel `/live/[username]` pages, live chat, realtime viewer
+  counts (seeded counts are static).
 - `docs/ARCHITECTURE.md` **exists** (Phase 1 deliverable, contrary to what
   this file previously said) — system/frontend/backend/database/streaming/
   realtime/auth/security/deployment/observability/scaling, per PROMPT.md
   §19 Phase 1.
-- `docs/DECISIONS.md` — ADR-001 through ADR-012 (video player + real clips
-  DB is ADR-012, added this session).
+- `docs/DECISIONS.md` — ADR-001 through ADR-013 (video player + real clips
+  DB is ADR-012; the real `live_streams` table behind `/live` is ADR-013).
 - `.claude/skills/` has grown well beyond the original `ui-ux-pro-max` set
   — a `motion` skill appeared during this session (installed by a
   concurrent session/process, not by this one — see the concurrent-session
@@ -86,8 +103,13 @@ deliverable is actually complete vs. scaffolded) — don't take low-numbered
   `docs/security.md`, `docs/testing.md` per CLAUDE.md's docs-discipline
   rule (§7) have not been confirmed to exist or not; not checked this
   session.
-- Live streaming (Phase 7) — ingest, RTMPS, viewer-facing live player —
-  not built. `/live` page exists but its data source wasn't verified.
+- Live streaming ingest (Phase 7) — RTMPS, stream keys, Cloudflare Stream
+  live inputs, broadcaster tooling, per-channel `/live/[username]` pages,
+  live chat, realtime viewer counts — not built. The **viewer-facing live
+  directory and playback are done** (ADR-013, above); what's missing is
+  everything that would put a genuine creator broadcast behind it.
+- `/following` is still a `ComingSoon` placeholder (deliberately untouched
+  by the live-directory work).
 
 ## Concurrent-session note (important — read this)
 
@@ -127,9 +149,10 @@ full picture.
    decided.
 2. **Cloudflare Stream's limits** (1080p delivery cap, no DRM) — accepted
    for v1 per ADR-005. Still unconfigured (`CLOUDFLARE_STREAM_API_TOKEN`
-   empty in `.env`) — clips currently play from seeded public test-video
-   URLs instead (ADR-012); swap `clips.video_url` rows for Stream HLS
-   manifests once an account exists, no schema/component change needed.
+   empty in `.env`) — clips and live channels currently play from seeded
+   public test-video URLs instead (ADR-012/ADR-013); swap `clips.video_url`
+   and `live_streams.video_url` rows for Stream HLS manifests once an
+   account exists, no schema/component change needed.
 
 ## Immediate next actions (start here)
 
@@ -138,10 +161,11 @@ full picture.
    vertical-slice features — auth, landing, discovery/clips — ahead of a
    full `DESIGN_SYSTEM.md`/phase audit). Worth a direct conversation with
    the user rather than assuming either way.
-2. If continuing feature work: live streaming (Phase 7) is the natural
-   next vertical slice now that clips (Phase 6-ish) plays real video —
-   ingest strategy, RTMPS, and the viewer-facing live player are all
-   unbuilt.
+2. If continuing feature work: live *ingest* (Phase 7) is the natural next
+   vertical slice now that clips play real video and `/live` lists real
+   channels from a real table (ADR-013) — ingest strategy, RTMPS/stream
+   keys, per-channel `/live/[username]` pages, live chat, and realtime
+   viewer counts are all still unbuilt.
 3. If closing the documentation gap: audit `dashboard/*`, `live.vue`,
    `following.vue`, `category/index.vue` against PROMPT.md's definition of
    done (§20 point 4 in CLAUDE.md — loading/empty/error states, real
