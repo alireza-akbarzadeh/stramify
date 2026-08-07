@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Search, X } from '@lucide/vue'
-import type { LiveSignal, WatchlistItem } from '#shared/types/discovery'
+import type { LiveSignal } from '#shared/types/discovery'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useLiveSignals } from '@/composables/useLiveSignals'
@@ -8,24 +8,18 @@ import { useWatchlist } from '@/composables/useWatchlist'
 import { filterLiveSignals, type LiveCategory } from '@/utils/live'
 import { liveToItem } from '@/utils/watchlist'
 import LiveChannelGrid from './LiveChannelGrid.vue'
-import ClipPlayerModal from './ClipPlayerModal.vue'
 
 const { data, isPending, isError, refetch } = useLiveSignals()
 const { isSaved, toggle } = useWatchlist()
 
 const search = ref('')
 const activeCategory = ref<LiveCategory>('All Live')
-const selectedItem = ref<WatchlistItem | null>(null)
 
 const signals = computed(() => data.value ?? [])
 const visible = computed(() => filterLiveSignals(signals.value, activeCategory.value, search.value))
-const selectedSaved = computed(() => (selectedItem.value ? isSaved(selectedItem.value.id) : false))
 
 function open(signal: LiveSignal) {
-  selectedItem.value = liveToItem(signal)
-}
-function toggleSelected() {
-  if (selectedItem.value) toggle(selectedItem.value)
+  navigateTo(`/live/${encodeURIComponent(signal.name)}`)
 }
 </script>
 
