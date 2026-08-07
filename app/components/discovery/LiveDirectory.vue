@@ -100,12 +100,5 @@ function open(signal: LiveSignal) {
       @play="open"
       @toggle-save="toggle(liveToItem($event))"
     />
-
-    <ClipPlayerModal
-      :item="selectedItem"
-      :saved="selectedSaved"
-      @close="selectedItem = null"
-      @toggle-save="toggleSelected"
-    />
   </div>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Search, X } from '@lucide/vue'
-import type { ClipCategory, WatchlistItem } from '#shared/types/discovery'
+import type { ClipCategory, LiveSignal, WatchlistItem } from '#shared/types/discovery'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useDiscoveryClips } from '@/composables/useDiscoveryClips'
@@ -50,6 +50,18 @@ const selectedSaved = computed(() => (selectedItem.value ? isSaved(selectedItem.
 
 function toggleSelected() {
   if (selectedItem.value) toggle(selectedItem.value)
+}
+
+/** Live channels get a real page now (`/live/[username]`); clips stay in the in-place preview modal. */
+function openSaved(item: WatchlistItem) {
+  if (item.kind === 'live') {
+    navigateTo(`/live/${encodeURIComponent(item.creator)}`)
+    return
+  }
+  selectedItem.value = item
+}
+function openLive(signal: LiveSignal) {
+  navigateTo(`/live/${encodeURIComponent(signal.name)}`)
 }
 </script>
 
@@ -119,7 +131,7 @@ function toggleSelected() {
       :saved-clips="savedClips"
       :saved-live="savedLive"
       :hydrated="hydrated"
-      @open="selectedItem = $event"
+      @open="openSaved"
       @remove="remove"
       @clear="clear"
       @browse="view = 'feed'"
@@ -157,7 +169,7 @@ function toggleSelected() {
         class="mb-12"
         :signals="liveSignals"
         :is-saved="isSaved"
-        @play="selectedItem = liveToItem($event)"
+        @play="openLive"
         @toggle-save="toggle(liveToItem($event))"
       />
 
