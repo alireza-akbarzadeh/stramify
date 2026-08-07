@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Search, X } from '@lucide/vue'
 import type { Clip, ClipCategory, LiveSignal, WatchlistItem } from '#shared/types/discovery'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,9 +6,10 @@ import { useDiscoveryClips } from '@/composables/useDiscoveryClips'
 import { useLiveSignals } from '@/composables/useLiveSignals'
 import { useWatchlistStore } from '@/stores/watchlist'
 import { clipToItem } from '@/utils/watchlist'
+import { Search, X } from '@lucide/vue'
+import ClipGrid from './ClipGrid.vue'
 import FeaturedClip from './FeaturedClip.vue'
 import LiveSignalsRail from './LiveSignalsRail.vue'
-import ClipGrid from './ClipGrid.vue'
 import WatchlistPanel from './WatchlistPanel.vue'
 
 type Category = ClipCategory | 'All Clips'
@@ -57,7 +57,7 @@ function openClip(clip: Clip) {
   navigateTo(`/watch/${encodeURIComponent(clip.id)}`)
 }
 </script>
-
+<!-- TODO: Responsive issue -->
 <template>
   <div class="mx-auto max-w-[1560px] px-4 py-8 sm:px-8 mt-12">
     <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -119,11 +119,7 @@ function openClip(clip: Clip) {
       </label>
     </div>
 
-    <WatchlistPanel
-      v-if="view === 'watchlist'"
-      @open="openSaved"
-      @browse="view = 'feed'"
-    />
+    <WatchlistPanel v-if="view === 'watchlist'" @open="openSaved" @browse="view = 'feed'" />
 
     <template v-else>
       <div v-if="clipsPending" class="mb-12 aspect-video animate-pulse rounded-xl bg-muted" />
@@ -159,11 +155,7 @@ function openClip(clip: Clip) {
         @play="openLive"
       />
 
-      <ClipGrid
-        v-model:active-category="activeCategory"
-        :clips="filteredClips"
-        @play="openClip"
-      />
+      <ClipGrid v-model:active-category="activeCategory" :clips="filteredClips" @play="openClip" />
     </template>
   </div>
 </template>

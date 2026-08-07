@@ -1,13 +1,12 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'auth' })
+import DashboardShell from '@/components/dashboard/DashboardShell.vue'
+
+definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 useHead({ title: 'Go live — Streamify' })
 </script>
 
 <template>
-  <DashboardShell
-    title="Overview"
-    description="Your channel, your activity, and what's happening now"
-  >
+  <DashboardShell title="Go live" description="Ingest, stream key, title and category">
     <ComingSoon
       title="Stream configuration"
       description="Ingest URL, stream key, title, and category — built in Phase 7 (Live Streaming)."

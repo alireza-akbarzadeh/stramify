@@ -2,7 +2,7 @@
 import AnalyticsView from '@/components/dashboard/AnalyticsView.vue'
 import DashboardShell from '@/components/dashboard/DashboardShell.vue'
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 useHead({ title: 'Analytics — Streamify' })
 </script>
 

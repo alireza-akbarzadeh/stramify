@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import type { Component } from 'vue'
-import { BarChart3, Compass, Grid2x2, Heart, Home, LayoutDashboard, Radio, Tv, Video } from '@lucide/vue'
 import { storeToRefs } from 'pinia'
-import { useAuthStore } from '@/stores/auth'
 import {
   Sidebar,
   SidebarContent,
@@ -18,38 +15,29 @@ import {
   SidebarRail,
   useSidebar
 } from '@/components/ui/sidebar'
+import { useAuthStore } from '@/stores/auth'
+import { creatorLinks, discoverLinks, isNavLinkActive, libraryLinks } from '@/utils/nav'
+import type { NavLink } from '@/utils/nav'
 import SidebarUserMenu from './SidebarUserMenu.vue'
 
+/**
+ * The app's primary navigation, in three groups: what to watch, what you've
+ * kept, and what you publish. The link lists live in `app/utils/nav.ts` so
+ * this file stays markup and the routes can be asserted in a test.
+ *
+ * The Creator group is hidden when signed out — those routes are all behind
+ * the `auth` middleware, and a link that only bounces you to `/login` is worse
+ * than no link.
+ */
 const route = useRoute()
 const { state, isMobile } = useSidebar()
 const { isAuthenticated } = storeToRefs(useAuthStore())
 
-const browseLinks = [
-  { to: '/', label: 'Home', icon: Home },
-  { to: '/live', label: 'Live', icon: Radio },
-  { to: '/clips', label: 'Clips', icon: Video },
-  { to: '/category', label: 'Categories', icon: Grid2x2 },
-  { to: '/channels', label: 'Channels', icon: Tv },
-  { to: '/following', label: 'Following', icon: Heart }
-]
-
-// `badge` marks a route that is still a placeholder. Analytics carries none
-// any more — it reads real aggregations now. Every route here is behind the
-// `auth` middleware, so the whole group is hidden when signed out rather than
-// offering links that only bounce the visitor to `/login`.
-const creatorLinks: Array<{ to: string; label: string; icon: Component; badge?: string }> = [
-  { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { to: '/dashboard/stream', label: 'Go live', icon: Compass, badge: 'Phase 7' },
-  { to: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 }
-]
-
-/**
- * `/` and `/dashboard` match exactly — as prefixes they'd light up for every
- * route and for their own children respectively.
- */
-function isActive(to: string) {
-  return to === '/' || to === '/dashboard' ? route.path === to : route.path.startsWith(to)
-}
+const groups = computed<Array<{ label: string; links: NavLink[] }>>(() => [
+  { label: 'Discover', links: discoverLinks },
+  { label: 'Your library', links: libraryLinks },
+  ...(isAuthenticated.value ? [{ label: 'Creator', links: creatorLinks }] : [])
+])
 </script>
 
 <template>
@@ -73,28 +61,16 @@ function isActive(to: string) {
     </SidebarHeader>
 
     <SidebarContent>
-      <SidebarGroup>
-        <SidebarGroupLabel>Browse</SidebarGroupLabel>
+      <SidebarGroup v-for="group in groups" :key="group.label">
+        <SidebarGroupLabel>{{ group.label }}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            <SidebarMenuItem v-for="link in browseLinks" :key="link.to">
-              <SidebarMenuButton as-child :is-active="isActive(link.to)" :tooltip="link.label">
-                <NuxtLink :to="link.to">
-                  <component :is="link.icon" aria-hidden="true" />
-                  <span>{{ link.label }}</span>
-                </NuxtLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-
-      <SidebarGroup v-if="isAuthenticated">
-        <SidebarGroupLabel>Creator tools</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem v-for="link in creatorLinks" :key="link.to">
-              <SidebarMenuButton as-child :is-active="isActive(link.to)" :tooltip="link.label">
+            <SidebarMenuItem v-for="link in group.links" :key="link.to">
+              <SidebarMenuButton
+                as-child
+                :is-active="isNavLinkActive(link.to, route.path)"
+                :tooltip="link.label"
+              >
                 <NuxtLink :to="link.to">
                   <component :is="link.icon" aria-hidden="true" />
                   <span>{{ link.label }}</span>

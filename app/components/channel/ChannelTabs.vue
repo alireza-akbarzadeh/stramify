@@ -19,7 +19,7 @@ const tabs = computed(() => [
 
 <template>
   <nav
-    class="sticky top-16 z-30 -mx-4 mt-6 border-b border-border bg-background/85 px-4 backdrop-blur-xl sm:-mx-8 sm:px-8"
+    class="sticky top-16 z-20 -mx-4 mt-6 border-b border-border bg-background/85 px-4 backdrop-blur-xl sm:-mx-8 sm:px-8"
     aria-label="Channel sections"
   >
     <ul class="flex items-center gap-1 overflow-x-auto">

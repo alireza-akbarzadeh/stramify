@@ -12,8 +12,7 @@ const { user } = storeToRefs(useAuthStore())
 const navLinks = [
   { label: 'Live', to: '/live' },
   { label: 'Channels', to: '/channels' },
-  { label: 'Shorts', to: '/shorts' },
-  { label: 'Stream', to: '/dashboard/stream' },
+  { label: 'Stream', to: '/studio/stream' },
   { label: 'Categories', to: '/category' },
   { label: 'Following', to: '/following' },
   { label: 'Clips', to: '/clips' }
@@ -94,7 +93,7 @@ const navLinks = [
       <div class="mt-3 flex flex-col gap-2 border-t border-border pt-3">
         <template v-if="user">
           <Button as-child variant="outline" @click="open = false">
-            <NuxtLink to="/dashboard">Creator dashboard</NuxtLink>
+            <NuxtLink to="/studio">Creator dashboard</NuxtLink>
           </Button>
           <Button as-child variant="ghost" @click="open = false">
             <NuxtLink to="/settings/security">Security</NuxtLink>

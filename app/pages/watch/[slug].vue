@@ -1,12 +1,10 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'dashboard' })
+
 const route = useRoute()
 const slug = computed(() => String(route.params.slug ?? ''))
 </script>
 
 <template>
-  <main id="main-content">
-    <AppHeader />
-    <WatchView :slug="slug" />
-    <AppFooter />
-  </main>
+  <WatchView :slug="slug" />
 </template>

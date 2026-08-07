@@ -42,6 +42,11 @@ function onFollow(handle: string) {
   if (!user.value) return toast.error('Log in to follow channels.')
   follow.mutate(handle, { onError: () => toast.error("Couldn't update your follow.") })
 }
+
+/** Only the card being toggled goes busy — one mutation drives the whole grid. */
+function isFollowPending(handle: string) {
+  return follow.isPending.value && follow.variables.value === handle
+}
 </script>
 
 <template>
@@ -164,7 +169,7 @@ function onFollow(handle: string) {
       >
         <ChannelDirectoryCard
           :channel="channel"
-          :pending="follow.isPending.value"
+          :pending="isFollowPending(channel.handle)"
           @follow="onFollow(channel.handle)"
         />
       </Reveal>

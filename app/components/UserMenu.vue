@@ -11,7 +11,7 @@ const { signOut } = auth
 const initial = computed(() => (user.value?.name || user.value?.email || '?').charAt(0).toUpperCase())
 
 const links = [
-  { to: '/dashboard', label: 'Creator dashboard', icon: LayoutDashboard },
+  { to: '/studio', label: 'Creator dashboard', icon: LayoutDashboard },
   { to: '/settings/security', label: 'Security', icon: ShieldCheck },
   { to: '/settings/two-factor', label: 'Two-factor auth', icon: ShieldHalf }
 ]

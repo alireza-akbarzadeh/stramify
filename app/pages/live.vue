@@ -1,11 +1,8 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Live — Streamify' })
 </script>
 
 <template>
-  <main id="main-content">
-    <AppHeader />
-    <LiveDirectory />
-    <AppFooter />
-  </main>
+  <LiveDirectory />
 </template>

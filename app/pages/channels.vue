@@ -1,11 +1,8 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Channels — Streamify' })
 </script>
 
 <template>
-  <main id="main-content">
-    <AppHeader />
-    <ChannelDirectory />
-    <AppFooter />
-  </main>
+  <ChannelDirectory />
 </template>

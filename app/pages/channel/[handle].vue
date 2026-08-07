@@ -1,12 +1,10 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'dashboard' })
+
 const route = useRoute()
 const handle = computed(() => String(route.params.handle ?? ''))
 </script>
 
 <template>
-  <main id="main-content">
-    <AppHeader />
-    <ChannelView :handle="handle" />
-    <AppFooter />
-  </main>
+  <ChannelView :handle="handle" />
 </template>

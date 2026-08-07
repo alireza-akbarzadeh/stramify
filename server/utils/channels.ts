@@ -103,7 +103,6 @@ type ChannelRow = {
   is_following: boolean
 }
 
-
 /**
  * Every channel in the system with its derived stats.
  *
@@ -206,7 +205,11 @@ function selectChannelRows(options: {
           ? sql`(h.handle ilike ${`%${search}%`} or coalesce(c.display_name, '') ilike ${`%${search}%`})`
           : sql`true`
       }
-      and ${category ? sql`${category} = any(cats.categories)` : sql`true`}
+      and ${
+        // Cast the bound parameter: `cats.categories` is `text[]`, and an
+        // untyped parameter on the left of `= any(...)` can't be inferred.
+        category ? sql`${category}::text = any(cats.categories)` : sql`true`
+      }
     order by ${ORDER_BY[sort]}
     limit ${limit}
   `)

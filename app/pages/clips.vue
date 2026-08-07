@@ -1,11 +1,8 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Clips — Streamify' })
 </script>
 
 <template>
-  <main id="main-content">
-    <AppHeader />
-    <DiscoveryFeed />
-    <AppFooter />
-  </main>
+  <DiscoveryFeed />
 </template>

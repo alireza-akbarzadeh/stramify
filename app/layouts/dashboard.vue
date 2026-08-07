@@ -18,7 +18,6 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 <template>
   <SidebarProvider>
     <AppSidebar />
-
     <SidebarInset id="main-content">
       <DashboardTopBar />
       <div class="flex-1">

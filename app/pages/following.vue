@@ -1,11 +1,11 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Following — Streamify' })
 </script>
 
 <template>
-  <main id="main-content">
-    <AppHeader />
-    <ComingSoon title="Following" description="Creators you follow will show up here — built in Phase 10 (Social)." />
-    <AppFooter />
-  </main>
+  <ComingSoon
+    title="Following"
+    description="Creators you follow will show up here — built in Phase 10 (Social)."
+  />
 </template>
