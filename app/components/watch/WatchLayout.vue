@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import type { CommentSort, ReactionValue, RelatedItem, WatchTarget } from '#shared/types/watch'
+import type {
+  CommentDraft,
+  CommentSort,
+  ReactionValue,
+  RelatedItem,
+  WatchTarget
+} from '#shared/types/watch'
 import type { ChatPanel, CommentsPanel, RelatedPanel, WatchEngagement } from './types'
 import WatchPlayer from './WatchPlayer.vue'
 import WatchMeta from './WatchMeta.vue'
@@ -35,6 +41,8 @@ defineEmits<{
   (e: 'react', value: ReactionValue): void
   (e: 'send-chat', body: string): void
   (e: 'toggle-save-related', item: RelatedItem): void
+  (e: 'post-comment', draft: CommentDraft): void
+  (e: 'like-comment' | 'remove-comment', id: string): void
   (e: 'play-start' | 'toggle-save' | 'share' | 'toggle-follow'): void
   (e: 'retry-related' | 'retry-comments' | 'retry-chat'): void
 }>()
@@ -101,7 +109,14 @@ defineEmits<{
         :comments="comments.items"
         :pending="comments.pending"
         :errored="comments.errored"
+        :can-post="comments.canPost"
+        :author-name="comments.authorName"
+        :author-image="comments.authorImage"
+        :posting="comments.posting"
         @retry="$emit('retry-comments')"
+        @post="$emit('post-comment', $event)"
+        @like="$emit('like-comment', $event)"
+        @remove="$emit('remove-comment', $event)"
       />
     </div>
   </div>

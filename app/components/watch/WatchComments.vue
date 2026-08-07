@@ -1,17 +1,27 @@
 <script setup lang="ts">
-import { Lock } from '@lucide/vue'
-import type { CommentSort, WatchComment } from '#shared/types/watch'
+import type { CommentDraft, CommentSort, WatchComment } from '#shared/types/watch'
 import { Button } from '@/components/ui/button'
+import { countComments } from '@/utils/comments'
+import WatchCommentComposer from './WatchCommentComposer.vue'
 import WatchCommentItem from './WatchCommentItem.vue'
 
-const props = defineProps<{ comments: WatchComment[]; pending: boolean; errored: boolean }>()
+const props = defineProps<{
+  comments: WatchComment[]
+  pending: boolean
+  errored: boolean
+  canPost: boolean
+  authorName: string | null
+  authorImage: string | null
+  posting: boolean
+}>()
 const sort = defineModel<CommentSort>('sort', { required: true })
-const emit = defineEmits<{ (e: 'retry'): void }>()
+const emit = defineEmits<{
+  (e: 'retry'): void
+  (e: 'like' | 'remove', id: string): void
+  (e: 'post', draft: CommentDraft): void
+}>()
 
-/** Replies count toward the total the way viewers read it — "42 comments". */
-const total = computed(() =>
-  props.comments.reduce((sum, comment) => sum + 1 + comment.replies.length, 0)
-)
+const total = computed(() => countComments(props.comments))
 </script>
 
 <template>
@@ -41,11 +51,17 @@ const total = computed(() =>
       </div>
     </div>
 
-    <p
-      class="mb-6 flex items-center gap-2 rounded-lg bg-surface-2 px-4 py-3 text-xs text-muted-foreground"
-    >
-      <Lock class="size-3.5 shrink-0" aria-hidden="true" />
-      Comments are read-only for now — posting arrives with the creator tools release.
+    <WatchCommentComposer
+      v-if="canPost"
+      class="mb-8"
+      :author-name="authorName"
+      :author-image="authorImage"
+      :pending="posting"
+      @submit="emit('post', { body: $event, parentId: null })"
+    />
+    <p v-else class="mb-8 rounded-lg bg-surface-2 px-4 py-3 text-sm text-muted-foreground">
+      <NuxtLink to="/login" class="font-semibold text-primary hover:underline">Log in</NuxtLink>
+      to join the conversation.
     </p>
 
     <div v-if="pending" class="space-y-6">
@@ -73,11 +89,22 @@ const total = computed(() =>
       v-else-if="!comments.length"
       class="rounded-lg border border-dashed border-border py-12 text-center text-sm text-muted-foreground"
     >
-      No comments on this one yet.
+      No comments on this one yet. {{ canPost ? 'Be the first.' : '' }}
     </p>
 
     <div v-else class="space-y-6">
-      <WatchCommentItem v-for="comment in comments" :key="comment.id" :comment="comment" />
+      <WatchCommentItem
+        v-for="comment in comments"
+        :key="comment.id"
+        :comment="comment"
+        :can-post="canPost"
+        :author-name="authorName"
+        :author-image="authorImage"
+        :posting="posting"
+        @like="emit('like', $event)"
+        @remove="emit('remove', $event)"
+        @reply="emit('post', $event)"
+      />
     </div>
   </section>
 </template>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Component } from 'vue'
 import { BarChart3, Compass, Grid2x2, Heart, Home, Radio, Video } from '@lucide/vue'
 import {
   Sidebar,
@@ -28,9 +29,11 @@ const browseLinks = [
   { to: '/following', label: 'Following', icon: Heart }
 ]
 
-const creatorLinks = [
+// `badge` marks a route that is still a placeholder. Analytics carries none
+// any more — it reads real aggregations now.
+const creatorLinks: Array<{ to: string; label: string; icon: Component; badge?: string }> = [
   { to: '/dashboard/stream', label: 'Go live', icon: Compass, badge: 'Phase 7' },
-  { to: '/dashboard/analytics', label: 'Analytics', icon: BarChart3, badge: 'Phase 9' }
+  { to: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 }
 ]
 
 function isActive(to: string) {
@@ -86,7 +89,10 @@ function isActive(to: string) {
                   <span>{{ link.label }}</span>
                 </NuxtLink>
               </SidebarMenuButton>
-              <SidebarMenuBadge class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+              <SidebarMenuBadge
+                v-if="link.badge"
+                class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+              >
                 {{ link.badge }}
               </SidebarMenuBadge>
             </SidebarMenuItem>

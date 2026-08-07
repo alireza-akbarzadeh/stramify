@@ -8,11 +8,44 @@ both VOD clips and live channels — see [ADR-014](./DECISIONS.md) for why, and
 
 | | Clip (VOD) | Live channel |
 |---|---|---|
-| Player | Vidstack, on-demand | Vidstack, `stream-type="live"` + LIVE badge |
+| Player | Custom skin on Vidstack, on-demand | Same skin, `stream-type="live"` + LIVE badge |
 | Meta line | views · published · duration | viewers · uptime |
 | Sidebar | Up next | Live chat **+** Up next |
-| Below | Comments (read-only) | — |
+| Below | Comments — post, reply, like, delete | — |
 | Always | like/dislike · share · save · follow channel · description | |
+
+## Player
+
+Vidstack's engine under a control bar this repo owns (ADR-016). Vidstack's
+stock `media-video-layout` is **not** used, and neither
+`default/theme.css` nor `default/layouts/video.css` is loaded — the skin
+lives in `app/assets/css/player.css` and the markup in
+`app/components/watch/player/`.
+
+```
+WatchPlayer.vue            media-player, provider, poster, gestures, spinner
+└─ PlayerControls.vue      two rows: scrubber, then the button bar
+   ├─ PlayerScrubber.vue   media-time-slider + hover timestamp
+   ├─ PlayerVolume.vue     mute + slider that expands on hover
+   ├─ PlayerSettings.vue   speed + quality radio groups
+   └─ PlayerTooltip.vue    shared tooltip wrapper
+```
+
+Vidstack's elements are headless: they own interaction, keyboard shortcuts
+and ARIA, and publish state as data attributes (`[data-paused]`,
+`[data-muted]`, `[data-active]`, `[data-buffering]`) plus three slider
+variables (`--slider-fill`, `--slider-progress`, `--slider-pointer`).
+**Icon swapping and fill widths are pure CSS off those** — no component
+mirrors playback state into its own reactive copy.
+
+Two things to know before editing `PlayerSettings.vue`:
+
+- The radio-item markup goes in through `v-html`. Vidstack clones a real
+  `<template>` DOM node per option, but Vue's compiler turns a bare
+  `<template>` in an SFC into a fragment and never emits the element.
+- The speed and quality lists are populated by Vidstack from what the source
+  offers. Quality is empty for a progressive MP4 and fills in for HLS, which
+  is why nothing declares levels by hand.
 
 ## Slug resolution
 
@@ -75,7 +108,10 @@ just a hidden button.
 | `GET /api/watch/[slug]` | — | 404 on unknown slug |
 | `GET /api/watch/[slug]/related` | — | same category, live first, max 12 |
 | `POST /api/watch/[slug]/view` | — | clips only; **no-op for live** |
-| `GET /api/watch/[slug]/comments` | — | `?sort=top\|new`; `[]` for live |
+| `GET /api/watch/[slug]/comments` | — | `?sort=top\|new`; `[]` for live. Session-aware: sets `likedByMe`/`isMine` |
+| `POST /api/watch/[slug]/comments` | ✔ | 1–1000 chars; `parentId` makes it a reply |
+| `DELETE /api/watch/[slug]/comments/[id]` | ✔ | own comments only (403 otherwise); takes replies with it |
+| `POST /api/watch/[slug]/comments/[id]/like` | ✔ | toggle; returns fresh total |
 | `GET /api/watch/[slug]/chat` | — | `?since=<iso>`; `[]` for clips |
 | `POST /api/watch/[slug]/chat` | ✔ | 1–200 chars |
 | `GET /api/watch/[slug]/reaction` | — | `mine` is null when signed out |
@@ -88,8 +124,11 @@ just a hidden button.
 Migration `0003_*`. See `server/db/schema/`.
 
 - **`comments`** — `clip_id`, one-level `parent_id`, nullable `user_id`
-  alongside non-null `author_name`. Read-only in the UI today; the nullable
-  FK is what makes enabling posting an endpoint change, not a migration.
+  alongside non-null `author_name`, so a seeded row and a real one render
+  identically. `likes` is the **seeded baseline only**; real likes live in
+  `comment_likes` and are added on top at read time.
+- **`comment_likes`** — one row per (user, comment), unique on that pair so
+  the toggle survives a double-click. Added in migration `0004_*`.
 - **`chat_messages`** — `stream_id`, denormalized `author_name` so rendering
   needs no join and a deleted account doesn't blank chat history.
 - **`reactions`** — `(target_id, target_kind)` instead of two tables. Unique
@@ -129,11 +168,25 @@ Try `/watch/clip-midnight-echo` (VOD), `/watch/Viper_Squadron` (live),
   value; `POST /view` deliberately doesn't touch it (ADR-014 point 8).
 - **A clip 404s but exists** — the id must match exactly. Only live handles
   are case-insensitive.
+- **A clip shows "No comments on this one yet"** — that clip has no seeded
+  rows. Every seeded clip should have some; `e2e/watch.spec.ts` guards this
+  by walking `/api/discovery/clips`. Re-run `npm run db:seed:comments`.
+- **A comment's like count jumps after clicking** — the displayed total is
+  `comments.likes` (seeded baseline) **plus** real `comment_likes` rows. If
+  the optimistic +1 and the server's total disagree, that sum is where to
+  look, not the counter.
+- **Player controls never appear** — `player.css` isn't loading. Controls
+  are hidden until Vidstack sets `[data-visible]` on `media-controls`, so
+  without the stylesheet they're invisible rather than unstyled.
 
 ## Known limits
 
-- Comments are read-only (ADR-014). Chat accepts posts; the asymmetry is
-  deliberate.
+- **No comment moderation.** Anyone signed in can post anything; there is no
+  report, hide, pin or block path, and no rate limit beyond the 1000-char
+  cap. This is the biggest real gap on the page (Phase 11, Admin).
+- No comment editing — delete and repost. See ADR-016 for why it was deferred.
+- The captions button is present but inert: no seeded source ships caption
+  tracks. It lights up when one does.
 - Chat is up to 5s behind. Phase 8 replaces the interval with crossws.
 - Up-next is category-only — no watch history, no recommender.
 - Renaming a channel orphans its follows until a `channels` table exists.

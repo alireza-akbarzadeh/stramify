@@ -98,9 +98,53 @@ deliverable is actually complete vs. scaffolded) — don't take low-numbered
     interval for crossws with no UI change.
   - `ClipPlayerModal.vue` and `LiveChannelView.vue` were **deleted** — every
     call site now navigates to `/watch/…`. `/live/[username]` is a redirect.
-  - Known gaps, deliberate: comments can't be posted; up-next is
-    category-only (no recommender); live viewer counts stay static (Phase 7);
-    `follows.channel` is a text handle because there's no `channels` table.
+  - Known gaps, deliberate: up-next is category-only (no recommender); live
+    viewer counts stay static (Phase 7); `follows.channel` is a text handle
+    because there's no `channels` table.
+- **Watch page, second pass — 2026-08-07, see ADR-016.** Three things the
+  read-only first pass left behind:
+  1. **Comments are writable.** Post, reply (one level), like and delete
+     your own. Four endpoints under `server/api/watch/[slug]/comments`,
+     all writes through `requireUser` with ownership re-checked server-side.
+     New `comment_likes` table — `comments.likes` stays as the seeded
+     baseline and real likes count on top, so seeded social proof survives
+     and an app-written comment starts at zero. Optimistic UI for like and
+     delete (`app/utils/comments.ts`, unit-tested); posting waits for the
+     server id. The "read-only for now" banner is gone.
+  2. **Seed coverage.** `seed-comments.mjs` covered 4 of 7 clips, so opening
+     `/watch/clip-rendering` showed an empty comment list and a one-line
+     info box and looked broken. Every seeded clip now has comments, and
+     three thin descriptions were fleshed out. Guarded by an e2e test that
+     walks `/api/discovery/clips` rather than hard-coding one slug.
+  3. **The player wears our own skin.** Vidstack's headless elements under
+     `app/components/watch/player/` + `app/assets/css/player.css`;
+     `media-video-layout`, `default/theme.css` and `layouts/video.css` are
+     no longer used. YouTube-shaped bar: scrubber with hover timestamp,
+     play, ±10s, volume, time, captions, speed/quality, PiP, fullscreen.
+  - **⚠️ Verification status — read this before trusting the above.** Same
+    problem as the first pass: the shell tool's safety classifier was down
+    for most of this session. What that means concretely:
+    - **`npm run db:generate` has NOT been run — the `comment_likes`
+      migration does not exist yet.** The schema file
+      (`server/db/schema/comment-likes.ts`) is written and exported, but
+      nothing is diffed or applied. **Comment likes will 500 until this
+      runs**, and the rest of the comment system is untested against a real
+      database. Run `npm run db:generate && npm run db:migrate` first.
+    - Then `npm run db:seed:comments` for the new rows.
+    - `npm run lint && npm run typecheck && npm run test && npm run test:e2e`
+      have not been run against any of this.
+    - **The player has never been rendered in a browser.** It was written
+      against Vidstack's element list (`node_modules/vidstack/elements.json`)
+      and its slider CSS variables, both read from the installed package —
+      not guessed — but a custom control bar is exactly the kind of thing
+      that needs eyes on it. Check `/watch/clip-rendering` and
+      `/zz-watch-preview` in both modes.
+    - **The share button was reported broken by the user and is NOT fixed.**
+      The wiring is correct end to end (`WatchActions` → `WatchLayout` →
+      `onShare` in `WatchView.vue`, clipboard + toast, `<Toaster>` mounted
+      in `app.vue`), so the failure is at runtime and needs the browser to
+      diagnose. Do not "fix" it by rewriting the handler without first
+      reproducing it — start with the console.
   - **⚠️ NOT YET VERIFIED — do this first if you're picking it up.** The
     session that wrote this lost the ability to execute shell commands
     partway through (the tool's safety classifier was down), so *none* of

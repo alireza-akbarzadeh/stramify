@@ -3,20 +3,20 @@ import { BarChart3, Clock, Radio } from '@lucide/vue'
 
 const items = [
   {
+    to: '/dashboard/analytics',
+    icon: BarChart3,
+    title: 'Analytics',
+    description: 'Follower growth, engagement, and clip performance — live now.',
+    phase: 'Available',
+    label: 'Creator System'
+  },
+  {
     to: '/dashboard/stream',
     icon: Radio,
     title: 'Go live',
     description: 'Ingest URL, stream key, title, and category for your broadcast.',
     phase: 'Phase 7',
     label: 'Live Streaming'
-  },
-  {
-    to: '/dashboard/analytics',
-    icon: BarChart3,
-    title: 'Analytics',
-    description: 'Views, watch time, and audience growth for your channel.',
-    phase: 'Phase 9',
-    label: 'Creator System'
   }
 ]
 </script>

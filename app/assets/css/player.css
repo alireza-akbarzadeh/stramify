@@ -1,0 +1,399 @@
+/*
+ * Skin for the watch-page player.
+ *
+ * Vidstack's elements are headless: they own interaction, keyboard and a11y,
+ * and expose state as data attributes plus three slider variables
+ * (`--slider-fill`, `--slider-progress`, `--slider-pointer`). Everything
+ * visual below is ours, so the player reads as part of this app rather than
+ * as a third-party widget — which is why `styles/default/theme.css` and
+ * `layouts/video.css` are no longer loaded in nuxt.config.ts.
+ *
+ * A plain stylesheet rather than scoped `<style>` blocks: the controls are
+ * split across several components, and scoped styles would need `:deep()` at
+ * every level to reach into custom elements that render their own children.
+ */
+
+.player {
+  --player-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: #000;
+}
+
+.player[data-fullscreen] {
+  border-radius: 0;
+  aspect-ratio: auto;
+}
+
+/* ── Poster and gestures ────────────────────────────────────────── */
+
+/* Both are positioned here because they were previously covered by
+   `layouts/video.css`, which this skin replaces. */
+.player-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.2s var(--player-ease);
+  pointer-events: none;
+}
+
+.player-poster[data-visible] {
+  opacity: 1;
+}
+
+media-gesture {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+/* ── Controls shell ─────────────────────────────────────────────── */
+
+.player-controls {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 2.5rem 0.5rem 0.5rem;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.85), rgb(0 0 0 / 0.4) 60%, transparent);
+  opacity: 0;
+  transform: translateY(0.5rem);
+  transition:
+    opacity 0.2s var(--player-ease),
+    transform 0.2s var(--player-ease);
+  pointer-events: none;
+}
+
+.player-controls[data-visible] {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-controls {
+    transition-duration: 0.01ms;
+    transform: none;
+  }
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.player-spacer {
+  flex: 1;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────── */
+
+.player-button {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.15s var(--player-ease);
+}
+
+.player-button:hover {
+  background: rgb(255 255 255 / 0.15);
+}
+
+.player-button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.player-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Icon swapping is driven by the state Vidstack already publishes, so no
+   component needs to mirror playback state into its own reactive copy. */
+.player-button [data-when-on],
+.player-button[data-paused] [data-when-off],
+.player-button[data-active] [data-when-off],
+.player-button[data-muted] [data-when-off] {
+  display: none;
+}
+
+.player-button[data-paused] [data-when-on],
+.player-button[data-active] [data-when-on],
+.player-button[data-muted] [data-when-on] {
+  display: block;
+}
+
+/* ── Time scrubber ──────────────────────────────────────────────── */
+
+.player-scrubber {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 1.25rem;
+  cursor: pointer;
+  touch-action: none;
+  contain: layout style;
+}
+
+.player-scrubber:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: 9999px;
+}
+
+.player-track {
+  position: absolute;
+  inset-inline: 0;
+  height: 0.1875rem;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.25);
+  transition: height 0.15s var(--player-ease);
+}
+
+/* Buffered ahead of the playhead. */
+.player-track-progress {
+  width: var(--slider-progress, 0%);
+  background: rgb(255 255 255 / 0.45);
+}
+
+.player-track-fill {
+  width: var(--slider-fill, 0%);
+  background: var(--primary);
+}
+
+.player-thumb {
+  position: absolute;
+  left: var(--slider-fill, 0%);
+  width: 0.8125rem;
+  height: 0.8125rem;
+  margin-left: -0.40625rem;
+  border-radius: 9999px;
+  background: var(--primary);
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 0.15s var(--player-ease),
+    transform 0.15s var(--player-ease);
+}
+
+.player-scrubber:hover .player-track,
+.player-scrubber[data-dragging] .player-track {
+  height: 0.3125rem;
+}
+
+.player-scrubber:hover .player-thumb,
+.player-scrubber[data-dragging] .player-thumb,
+.player-scrubber:focus-visible .player-thumb {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Hover/scrub timestamp. Vidstack positions this via `--slider-pointer`. */
+.player-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.15s var(--player-ease);
+  pointer-events: none;
+}
+
+.player-scrubber:hover .player-preview,
+.player-scrubber[data-dragging] .player-preview {
+  opacity: 1;
+}
+
+.player-preview-value {
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
+  background: rgb(0 0 0 / 0.85);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+/* ── Volume ─────────────────────────────────────────────────────── */
+
+.player-volume {
+  display: flex;
+  align-items: center;
+}
+
+/* Collapsed until the group is hovered or the slider itself has focus —
+   the YouTube behaviour, and it keeps the bar tidy on narrow players. */
+.player-volume-slider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 0;
+  height: 1.25rem;
+  cursor: pointer;
+  touch-action: none;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    width 0.2s var(--player-ease),
+    opacity 0.2s var(--player-ease);
+}
+
+.player-volume:hover .player-volume-slider,
+.player-volume-slider:focus-within {
+  width: 4.5rem;
+  opacity: 1;
+  margin-inline: 0.25rem;
+}
+
+.player-volume-slider .player-track {
+  height: 0.1875rem;
+}
+
+.player-volume-slider .player-thumb {
+  opacity: 1;
+  transform: scale(1);
+  width: 0.6875rem;
+  height: 0.6875rem;
+  margin-left: -0.34375rem;
+  background: #fff;
+}
+
+.player-volume-slider .player-track-fill {
+  background: #fff;
+}
+
+/* ── Time readout ───────────────────────────────────────────────── */
+
+.player-time {
+  padding-inline: 0.5rem;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.player-time-divider {
+  color: rgb(255 255 255 / 0.6);
+}
+
+/* ── Tooltips ───────────────────────────────────────────────────── */
+
+.player-tooltip {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  background: rgb(0 0 0 / 0.9);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  z-index: 40;
+}
+
+/* ── Settings menu ──────────────────────────────────────────────── */
+
+.player-menu-items {
+  min-width: 11rem;
+  padding: 0.375rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: color-mix(in oklab, var(--popover) 92%, transparent);
+  backdrop-filter: blur(12px);
+  color: var(--popover-foreground);
+  font-size: 0.8125rem;
+  z-index: 40;
+}
+
+.player-menu-items[data-resizing] {
+  overflow: hidden;
+}
+
+.player-menu-label {
+  padding: 0.375rem 0.5rem 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+
+.player-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.player-radio:hover,
+.player-radio:focus-visible {
+  background: var(--surface-3);
+  outline: none;
+}
+
+.player-radio-check {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  border: 1.5px solid var(--muted-foreground);
+}
+
+.player-radio[data-checked] .player-radio-check {
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: inset 0 0 0 2.5px var(--popover);
+}
+
+/* ── Buffering spinner ──────────────────────────────────────────── */
+
+.player-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.2s var(--player-ease);
+  pointer-events: none;
+}
+
+.player[data-buffering] .player-spinner {
+  opacity: 1;
+}
+
+/* ── Captions ───────────────────────────────────────────────────── */
+
+.player-captions {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  font-size: clamp(0.875rem, 2.5cqw, 1.375rem);
+  transition: bottom 0.2s var(--player-ease);
+  pointer-events: none;
+}
+
+.player-captions [data-part='cue'] {
+  padding: 0.2em 0.5em;
+  border-radius: 0.25rem;
+  background: rgb(0 0 0 / 0.75);
+  color: #fff;
+}

@@ -1,12 +1,13 @@
 <script setup lang="ts">
+import AnalyticsView from '@/components/dashboard/AnalyticsView.vue'
+import DashboardShell from '@/components/dashboard/DashboardShell.vue'
+
 definePageMeta({ middleware: 'auth' })
 useHead({ title: 'Analytics — Streamify' })
 </script>
 
 <template>
-  <main id="main-content">
-    <AppHeader />
-    <ComingSoon title="Analytics" description="Views, watch time, and audience growth — built in Phase 9 (Creator System)." />
-    <AppFooter />
-  </main>
+  <DashboardShell title="Analytics" description="Followers, engagement, and clip performance">
+    <AnalyticsView />
+  </DashboardShell>
 </template>

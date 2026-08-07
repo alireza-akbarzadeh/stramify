@@ -100,6 +100,8 @@ export const comments: WatchComment[] = [
     authorImage: null,
     body: 'The transition at 1:12 is the best thing I have heard all year. Whoever ran the desk feed deserves a raise.',
     likes: 412,
+    likedByMe: false,
+    isMine: false,
     age: '1h ago',
     replies: [
       {
@@ -108,6 +110,8 @@ export const comments: WatchComment[] = [
         authorImage: null,
         body: 'That was completely unplanned — the desk engineer caught it on instinct.',
         likes: 96,
+        likedByMe: true,
+        isMine: false,
         age: '48m ago',
         replies: []
       }
@@ -119,15 +123,20 @@ export const comments: WatchComment[] = [
     authorImage: null,
     body: 'Been waiting three years for a proper recording of this encore. Worth every minute.',
     likes: 188,
+    likedByMe: false,
+    isMine: false,
     age: '2h ago',
     replies: []
   },
+  // Owned by the previewing user, so the preview exercises the delete affordance.
   {
     id: 'comment-3',
     authorName: 'tape_hiss',
     authorImage: null,
     body: 'Four handhelds and it still cuts cleaner than most studio releases.',
     likes: 74,
+    likedByMe: false,
+    isMine: true,
     age: '3h ago',
     replies: []
   }

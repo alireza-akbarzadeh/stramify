@@ -524,3 +524,131 @@ the two knobs if that changes before Phase 8 lands. Unlike comments (which
 are read-only per ADR-014), chat accepts posts — the asymmetry is
 deliberate: a live stream is worthless without a back-channel, a VOD is
 not.
+
+---
+
+## ADR-016: Comments become writable; a custom player skin replaces Vidstack's default layout
+
+**Status**: Accepted (2026-08-07). Supersedes the read-only-comments part of
+ADR-014; the rest of ADR-014 stands.
+
+**Context**: ADR-014 shipped `/watch/[slug]` with comments deliberately
+read-only, on the reasoning that posting belonged with the creator-tools
+release. In practice the watch page then carried a "comments are read-only
+for now" banner above a list nobody could join, which reads as an unfinished
+feature rather than a scoped one. The `comments` table was already shaped for
+posting (nullable `user_id`, `parent_id` for one reply level), so the only
+thing standing between the page and a working comment section was endpoints.
+
+Two other things surfaced at the same time and are recorded here because
+they were fixed together:
+
+- **Seed coverage was uneven.** `seed-comments.mjs` covered four of the seven
+  seeded clips. Opening `/watch/clip-rendering` — a clip with no comments and
+  a one-line description — showed an empty comment list and a bare info box,
+  which looked like a bug and wasn't.
+- **The player wore Vidstack's stock skin.** `media-video-layout` is a
+  perfectly good default that looks nothing like this app, to the point that
+  it reads as an unstyled `<video>` element to anyone looking at the page.
+
+**Decision**:
+
+1. **Comments are writable.** Four endpoints under
+   `server/api/watch/[slug]/comments`: `GET` (now session-aware), `POST`
+   (create/reply), `DELETE /[id]` (own comments only), and
+   `POST /[id]/like`. Every write goes through `requireUser` and re-checks
+   ownership server-side; the UI's affordances are not the authorization.
+2. **Likes are a new `comment_likes` table**, not a mutated counter.
+   `comments.likes` stays as the seeded baseline and real like rows count on
+   top of it, so seeded social proof survives and an app-written comment
+   starts honestly at zero. A unique `(user_id, comment_id)` makes the toggle
+   safe under a double-click, mirroring `reactions`.
+3. **Replies stay one level deep.** Replying to a reply attaches to that
+   reply's parent rather than 400-ing — it's what the viewer meant, and it
+   keeps the reader's in-memory threading (no recursive CTE) correct.
+4. **The player gets our own skin.** Vidstack's headless elements
+   (`vidstack/player/ui`) under `app/components/watch/player/` plus
+   `app/assets/css/player.css`. `default/theme.css` and
+   `default/layouts/video.css` are no longer loaded, and
+   `player/layouts/default` is no longer imported.
+5. **Every seeded clip gets comments.** Covered by an e2e regression test
+   that walks `/api/discovery/clips` rather than checking one hard-coded slug.
+
+**Rejected**: *Counting likes by mutating `comments.likes`* — loses the
+distinction between seeded baseline and real engagement, and makes an unlike
+indistinguishable from a bad decrement. *Full comment editing* — considered
+and deferred; it needs an `edited_at` column and an inline edit state, and
+delete-and-repost covers the common case. *Arbitrary reply depth* — the UI
+has nowhere to put level three and the reader would need a recursive CTE.
+*Theming Vidstack's default layout with CSS variables* — cheaper, but locks
+the control arrangement to Vidstack's choices. *Replacing Vidstack with a
+hand-rolled `<video>` wrapper* — throws away HLS handling, keyboard
+shortcuts, focus management and ARIA that already work.
+
+**Consequences**: Comment moderation does not exist — anyone signed in can
+post anything, and there is no report/hide/pin path. That is the next real
+gap on this page and is deliberately out of scope here (Phase 11, Admin).
+The custom skin means Vidstack layout upgrades no longer arrive for free;
+the trade is that the player now matches the app. Captions render but no
+seeded source ships caption tracks, so the button is present and inert until
+one does — visible and honest rather than hidden.
+
+---
+
+## ADR-017: The dashboard reads real aggregations; channel ownership stays the handle
+
+**Status**: Accepted (2026-08-07).
+
+**Context**: `/dashboard` was a welcome banner plus a security checklist and a
+roadmap card, and `/dashboard/analytics` was a `ComingSoon` placeholder. Both
+rendered through `AppHeader`/`AppFooter` even though `DashboardShell.vue` and
+`AppSidebar.vue` — a full sidebar shell — already existed unused in
+`app/components/dashboard/`.
+
+Making the dashboard real runs straight into a schema fact: **nothing links a
+`user` to the content they publish.** `clips.creator` and
+`live_streams.streamer_name` are free text, there is no `channels` table and
+no `clips.user_id` (ADR-014). So "your channel's numbers" has no foreign key
+to follow.
+
+**Decision**: Build the dashboard on real aggregations only, and resolve
+channel ownership the way the rest of the app already does — by handle.
+
+1. **Ownership = `user.name` matched case-insensitively** against
+   `clips.creator` / `live_streams.streamer_name`. This is not a new identity
+   model; it is exactly what `readChannelSummary` (`server/utils/channels.ts`)
+   and `/api/discovery/live/[streamer]` already do, and what `follows.channel`
+   already stores. No migration.
+2. **No channel means an empty state, not zeroes.** `CreatorOverview.exists`
+   is false when a handle owns no clips and has no live session, and the UI
+   says "nothing published under your handle yet". A grid reading "0 views,
+   0 followers" would claim a channel exists and is doing badly.
+3. **Only metrics the database can actually answer.** Followers, clips, views,
+   likes received, comments received (creator side); following, reactions
+   given, comments posted, chat sent (viewer side); live channels, viewers,
+   clips, busiest category (platform). Time series come from real
+   `created_at` columns on `follows`, `comments` and `reactions`.
+4. **What isn't recorded isn't shown.** No watch time, retention, unique
+   viewers, or view-over-time chart — `clips.views` is a single counter, not a
+   session log. The analytics page says so in visible copy rather than
+   omitting it silently or estimating it (CLAUDE.md §2).
+5. **The handle comes from the session, never a query parameter.**
+   `/api/dashboard/analytics` has no `?channel=`; with no `channels` table one
+   would let any signed-in user read anyone else's numbers.
+
+**Rejected**: *Adding a `channels` table or `clips.user_id` now* — the right
+long-term fix and explicitly anticipated by ADR-014, but it is a migration
+plus a backfill plus an ownership-claim flow, which is Phase 9 work, not a
+prerequisite for reading numbers that already exist. *Seeding a demo channel
+onto the signed-in user* — fake data in a production path. *Estimating watch
+time from `duration_seconds × views`* — an invented metric that would look
+authoritative. *A charting library* — two SVG paths do not justify a
+dependency; `TrendChart.vue` is ~60 lines.
+
+**Consequences**: A user whose display name doesn't match a seeded creator
+sees the empty state on both pages — correct, but it means the populated
+dashboard is only visible by signing in as (or renaming to) a seeded handle
+such as `Viper_Squadron`. Renaming a channel still orphans its follows and now
+also its dashboard, the same known cost ADR-014 recorded. Analytics windows
+are capped at 90 days because `follows`/`reactions` only start when those
+tables did.

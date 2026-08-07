@@ -63,7 +63,7 @@ const clips = [
     creator: 'Canvas_Queen',
     category: 'Creative',
     description:
-      'The last pass before export: rim light, dust, and the tiny grain that makes the whole frame sit right.',
+      'The last pass before export: rim light, dust, and the tiny grain that makes the whole frame sit right.\n\nEverything here is done at 200% zoom with a two-pixel brush. The rim light goes on a separate additive layer so it can be dialled back after the grain lands — bake it in early and you lose the only control that matters.\n\nRendered at 4K, graded, then downsampled. Full timelapse and the layer stack are on the channel.',
     videoUrl: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
     thumbnailUrl: placeholder('rendering-details'),
     durationSeconds: 52,
@@ -77,7 +77,7 @@ const clips = [
     creator: 'Sky_High',
     category: 'Creative',
     description:
-      'Twenty minutes of setup for thirty seconds of light. Worth it every single time.',
+      'Twenty minutes of setup for thirty seconds of light. Worth it every single time.\n\nShot on a 70-200 at f/2.8, ISO locked to 100, exposing for the highlights and lifting the shadows afterwards. The haze is real — no filter, just a lot of patience and a very cold morning.',
     videoUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4',
     thumbnailUrl: placeholder('golden-hour'),
     durationSeconds: 30,
@@ -104,7 +104,8 @@ const clips = [
     title: 'Forging the Final Cut',
     creator: 'Canvas_Queen',
     category: 'Creative',
-    description: 'No undo, no hesitation. Ten years of ruining paper condensed into thirty seconds.',
+    description:
+      'No undo, no hesitation. Ten years of ruining paper condensed into thirty seconds.\n\nThe brush is a size 4 round that has lost about half its bristles, which is exactly why it works. Ink is standard waterproof black, thinned maybe five percent.',
     videoUrl: 'https://test-streams.mux.dev/pts_shift/master.m3u8',
     thumbnailUrl: placeholder('steel-forge'),
     durationSeconds: 30,

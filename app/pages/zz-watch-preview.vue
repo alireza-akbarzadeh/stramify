@@ -24,7 +24,15 @@ const engagement = {
   followPending: false
 }
 const related = { items: fixtures.relatedItems, pending: false, errored: false }
-const comments = { items: fixtures.comments, pending: false, errored: false }
+const comments = {
+  items: fixtures.comments,
+  pending: false,
+  errored: false,
+  canPost: true,
+  authorName: 'Preview_Viewer',
+  authorImage: null,
+  posting: false
+}
 const chat = {
   items: fixtures.chatMessages,
   pending: false,

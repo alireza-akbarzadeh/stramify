@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ArrowLeft } from '@lucide/vue'
 import { toast } from 'vue-sonner'
-import type { CommentSort, ReactionValue, RelatedItem } from '#shared/types/watch'
+import type { CommentDraft, CommentSort, ReactionValue, RelatedItem } from '#shared/types/watch'
 import { Button } from '@/components/ui/button'
 import { useWatchTarget, useWatchRelated } from '@/composables/useWatchTarget'
 import { useWatchComments } from '@/composables/useWatchComments'
+import { useWatchCommentMutations } from '@/composables/useWatchCommentMutations'
 import { useWatchChat } from '@/composables/useWatchChat'
-import { useChannelFollow, useWatchReaction } from '@/composables/useWatchEngagement'
+import { useWatchReaction } from '@/composables/useWatchEngagement'
+import { useChannelFollow } from '@/composables/useChannel'
 import { useViewCounter } from '@/composables/useViewCounter'
 import { useAuth } from '@/composables/useAuth'
 import { useWatchlist } from '@/composables/useWatchlist'
@@ -24,6 +26,7 @@ const isClip = computed(() => target.data.value?.kind === 'clip')
 
 const sort = ref<CommentSort>('top')
 const comments = useWatchComments(slug, sort, isClip)
+const commentActions = useWatchCommentMutations(slug)
 const chat = useWatchChat(slug, isLive)
 
 const channelName = computed(() => target.data.value?.channel ?? '')
@@ -53,7 +56,11 @@ const relatedPanel = computed(() => ({
 const commentsPanel = computed(() => ({
   items: comments.data.value ?? [],
   pending: comments.isPending.value,
-  errored: comments.isError.value
+  errored: comments.isError.value,
+  canPost: !!user.value,
+  authorName: user.value?.name ?? null,
+  authorImage: user.value?.image ?? null,
+  posting: commentActions.post.isPending.value
 }))
 const chatPanel = computed(() => ({
   items: chat.messages.value,
@@ -80,6 +87,20 @@ function onFollow() {
 }
 function onSendChat(body: string) {
   chat.send.mutate(body, { onError: () => toast.error("Couldn't send that message.") })
+}
+function onPostComment(draft: CommentDraft) {
+  if (!user.value) return toast.error('Log in to comment.')
+  commentActions.post.mutate(draft, { onError: () => toast.error("Couldn't post that comment.") })
+}
+function onLikeComment(id: string) {
+  if (!user.value) return toast.error('Log in to like comments.')
+  commentActions.like.mutate(id)
+}
+function onRemoveComment(id: string) {
+  commentActions.remove.mutate(id, {
+    onSuccess: () => toast.success('Comment deleted'),
+    onError: () => toast.error("Couldn't delete that comment.")
+  })
 }
 function onShare() {
   navigator.clipboard
@@ -139,6 +160,9 @@ function onSaveRelated(item: RelatedItem) {
       @share="onShare"
       @toggle-follow="onFollow"
       @send-chat="onSendChat"
+      @post-comment="onPostComment"
+      @like-comment="onLikeComment"
+      @remove-comment="onRemoveComment"
       @toggle-save-related="onSaveRelated"
       @retry-related="related.refetch()"
       @retry-comments="comments.refetch()"

@@ -1,8 +1,13 @@
 // Seeds the `comments` table so the watch page's comment section has real
-// rows to render. Comments are read-only in the UI for now (ADR-014), so
-// these are the only rows that exist — they're seeded sample content, the
-// same category of data as the clips and live streams they hang off, not
-// fixtures wired into a production code path.
+// rows to render — seeded sample content, the same category of data as the
+// clips and live streams it hangs off, not fixtures wired into a production
+// code path. Viewers can now post, reply, like and delete on top of these
+// (ADR-016); `likes` here is the baseline that real `comment_likes` rows
+// count on top of.
+//
+// Every clip in `seed-clips.mjs` gets comments. That isn't cosmetic: a clip
+// with none renders the empty state, which made the watch page look broken
+// on whichever clip you happened to open first.
 //
 // Every `clip_id` below must exist: run `npm run db:seed:clips` first (or
 // just `npm run db:seed`, which orders them correctly).
@@ -104,6 +109,132 @@ const comments = [
     body: 'The confidence in those final strokes. No undo, no hesitation.',
     likes: 97,
     createdAt: minutesAgo(310)
+  },
+  {
+    id: 'comment-render-1',
+    clipId: 'clip-rendering',
+    parentId: null,
+    authorName: 'vertex_and_vellum',
+    body: 'The rim light pass is doing so much heavy lifting here. Most people would have called it done two steps earlier and wondered why it looked flat.',
+    likes: 264,
+    createdAt: minutesAgo(35)
+  },
+  {
+    id: 'comment-render-1-r1',
+    clipId: 'clip-rendering',
+    parentId: 'comment-render-1',
+    authorName: 'Canvas_Queen',
+    body: 'Honestly the flat version sat on my drive for a week before I worked out what was missing.',
+    likes: 131,
+    createdAt: minutesAgo(28)
+  },
+  {
+    id: 'comment-render-1-r2',
+    clipId: 'clip-rendering',
+    parentId: 'comment-render-1',
+    authorName: 'soft_occlusion',
+    body: 'Same thing happens to me every single time. It is always the light.',
+    likes: 44,
+    createdAt: minutesAgo(21)
+  },
+  {
+    id: 'comment-render-2',
+    clipId: 'clip-rendering',
+    parentId: null,
+    authorName: 'dust_motes',
+    body: 'Genuinely did not notice the grain until you toggled it off. Now I cannot unsee how dead the frame looks without it.',
+    likes: 187,
+    createdAt: minutesAgo(72)
+  },
+  {
+    id: 'comment-render-2-r1',
+    clipId: 'clip-rendering',
+    parentId: 'comment-render-2',
+    authorName: 'Canvas_Queen',
+    body: 'That is the whole trick. Nobody should notice it, they should just believe the frame.',
+    likes: 92,
+    createdAt: minutesAgo(66)
+  },
+  {
+    id: 'comment-render-3',
+    clipId: 'clip-rendering',
+    parentId: null,
+    authorName: 'halftone_hero',
+    body: 'What brush is the dust on? Mine always ends up looking like noise rather than actual particles in the air.',
+    likes: 58,
+    createdAt: minutesAgo(140)
+  },
+  {
+    id: 'comment-render-4',
+    clipId: 'clip-rendering',
+    parentId: null,
+    authorName: 'lowpoly_lucy',
+    body: 'Two pixel brush at 200% zoom is unhinged behaviour and I respect it enormously.',
+    likes: 149,
+    createdAt: minutesAgo(210)
+  },
+  {
+    id: 'comment-render-5',
+    clipId: 'clip-rendering',
+    parentId: null,
+    authorName: 'render_farm_refugee',
+    body: 'Downsampling from 4K after the grade is the step everyone skips. It is why this looks clean and mine never does.',
+    likes: 73,
+    createdAt: minutesAgo(300)
+  },
+  {
+    id: 'comment-golden-1',
+    clipId: 'clip-golden-hour',
+    parentId: null,
+    authorName: 'stop_down_steve',
+    body: 'Twenty minutes of setup for thirty seconds of light is the most honest description of this hobby I have ever read.',
+    likes: 211,
+    createdAt: minutesAgo(95)
+  },
+  {
+    id: 'comment-golden-1-r1',
+    clipId: 'clip-golden-hour',
+    parentId: 'comment-golden-1',
+    authorName: 'Sky_High',
+    body: 'And about four mornings where the light never showed up at all. Those do not make the cut.',
+    likes: 118,
+    createdAt: minutesAgo(88)
+  },
+  {
+    id: 'comment-golden-2',
+    clipId: 'clip-golden-hour',
+    parentId: null,
+    authorName: 'aperture_priority',
+    body: 'Exposing for the highlights and lifting later is the correct call and people still argue about it.',
+    likes: 64,
+    createdAt: minutesAgo(180)
+  },
+  {
+    id: 'comment-street-1',
+    clipId: 'clip-street-run',
+    parentId: null,
+    authorName: 'apex_hunter',
+    body: 'Holding it flat through the gravel section takes real nerve. That is where I bin it every attempt.',
+    likes: 176,
+    createdAt: minutesAgo(115)
+  },
+  {
+    id: 'comment-street-1-r1',
+    clipId: 'clip-street-run',
+    parentId: 'comment-street-1',
+    authorName: 'Subaru_Nomad',
+    body: 'Trick is committing before you can see the exit. Lift once and the run is already gone.',
+    likes: 89,
+    createdAt: minutesAgo(102)
+  },
+  {
+    id: 'comment-street-2',
+    clipId: 'clip-street-run',
+    parentId: null,
+    authorName: 'handbrake_harry',
+    body: 'Clean transition with no lift. Not a single wasted input in the whole stage.',
+    likes: 52,
+    createdAt: minutesAgo(240)
   }
 ]
 

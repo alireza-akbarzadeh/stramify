@@ -1,4 +1,5 @@
 export * from './auth'
+export * from './channels'
 export * from './clips'
 export * from './live-streams'
 export * from './comments'

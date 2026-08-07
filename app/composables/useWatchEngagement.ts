@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
-import type { ChannelSummary, ReactionSummary, ReactionValue } from '#shared/types/watch'
+import type { ReactionSummary, ReactionValue } from '#shared/types/watch'
 import { applyReaction } from '@/utils/reactions'
 
 const EMPTY_REACTIONS: ReactionSummary = { likes: 0, dislikes: 0, mine: null }
@@ -43,28 +43,6 @@ export function useWatchReaction(slug: MaybeRefOrGetter<string>) {
   return { reactions: computed(() => query.data.value ?? EMPTY_REACTIONS), toggle }
 }
 
-/**
- * Follow state for a channel. The server returns the fresh summary from the
- * toggle, so the follower count and the button update from one round trip.
- */
-export function useChannelFollow(name: MaybeRefOrGetter<string>) {
-  const key = computed(() => toValue(name))
-  const client = useQueryClient()
-  const queryKey = computed(() => ['channel', key.value])
-
-  const query = useQuery({
-    queryKey: ['channel', key],
-    queryFn: () => $fetch<ChannelSummary>(`/api/channels/${encodeURIComponent(key.value)}`),
-    enabled: computed(() => !!key.value)
-  })
-
-  const toggle = useMutation({
-    mutationFn: () =>
-      $fetch<ChannelSummary>(`/api/channels/${encodeURIComponent(key.value)}/follow`, {
-        method: 'POST'
-      }),
-    onSuccess: (summary) => client.setQueryData(queryKey.value, summary)
-  })
-
-  return { channel: computed(() => query.data.value ?? null), toggle }
-}
+// `useChannelFollow` used to live here. It moved to `useChannel.ts` when the
+// channel page and the channel directory started sharing the same follow
+// state — one mutation now patches every cached shape of a channel.

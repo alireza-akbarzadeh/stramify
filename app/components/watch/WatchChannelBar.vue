@@ -2,7 +2,7 @@
 import { Check, Plus } from '@lucide/vue'
 import type { ChannelSummary } from '#shared/types/watch'
 import { Button } from '@/components/ui/button'
-import ChannelAvatar from './ChannelAvatar.vue'
+import ChannelAvatar from '@/components/ChannelAvatar.vue'
 
 defineProps<{ channel: ChannelSummary | null; name: string; pending?: boolean }>()
 const emit = defineEmits<{ (e: 'toggle-follow'): void }>()

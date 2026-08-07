@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ChatMessage } from '#shared/types/watch'
 import { formatRelativeTime } from '#shared/utils/format'
-import ChannelAvatar from './ChannelAvatar.vue'
+import ChannelAvatar from '@/components/ChannelAvatar.vue'
 
 const props = defineProps<{ message: ChatMessage; pending?: boolean }>()
 

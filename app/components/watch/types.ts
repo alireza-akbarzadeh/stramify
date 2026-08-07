@@ -28,7 +28,15 @@ export interface WatchEngagement {
 }
 
 export type RelatedPanel = AsyncPanel<RelatedItem>
-export type CommentsPanel = AsyncPanel<WatchComment>
+
+export interface CommentsPanel extends AsyncPanel<WatchComment> {
+  /** False when signed out — the composer swaps for a log-in prompt. */
+  canPost: boolean
+  /** Who the composer's avatar belongs to; null when signed out. */
+  authorName: string | null
+  authorImage: string | null
+  posting: boolean
+}
 
 export interface ChatPanel extends AsyncPanel<ChatMessage> {
   /** False when signed out — the composer swaps for a log-in prompt. */

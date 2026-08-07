@@ -36,6 +36,29 @@ test('signed-out viewers get a log-in prompt instead of a chat composer', async 
   await expect(page.getByRole('textbox', { name: /send a chat message/i })).toHaveCount(0)
 })
 
+test('signed-out viewers get a log-in prompt instead of a comment composer', async ({ page }) => {
+  await page.goto(CLIP)
+  await expect(page.getByText(/to join the conversation/i)).toBeVisible()
+  await expect(page.getByRole('textbox', { name: /add a comment/i })).toHaveCount(0)
+})
+
+test('every seeded clip has comments to show', async ({ page }) => {
+  // Regression guard: `clip-rendering` shipped with no seeded comments, so the
+  // watch page rendered its empty state and read as broken. Checked through
+  // the API rather than the DOM so a failure names the clip that regressed.
+  // A clip's watch slug is its `clips.id` — see `server/utils/watch.ts`.
+  const slugs = await page
+    .request.get('/api/discovery/clips')
+    .then((res) => res.json())
+    .then((clips: { id: string }[]) => clips.map((clip) => clip.id))
+
+  expect(slugs.length).toBeGreaterThan(0)
+  for (const slug of slugs) {
+    const comments = await page.request.get(`/api/watch/${slug}/comments`).then((r) => r.json())
+    expect(comments, `${slug} has no seeded comments`).not.toHaveLength(0)
+  }
+})
+
 test('an unknown slug renders the not-available state, not a blank page', async ({ page }) => {
   await page.goto('/watch/definitely-not-a-real-slug')
   await expect(page.getByRole('heading', { name: /couldn't find that video/i })).toBeVisible()

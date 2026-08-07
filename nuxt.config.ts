@@ -6,9 +6,12 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: [
     '~/assets/css/main.css',
+    // Vidstack's base element styles only. The stock `default/theme.css` and
+    // `default/layouts/video.css` are deliberately not loaded — the player
+    // wears our own skin (`assets/css/player.css`) over Vidstack's headless
+    // elements, so the default layout's styles would only fight it.
     'vidstack/player/styles/base.css',
-    'vidstack/player/styles/default/theme.css',
-    'vidstack/player/styles/default/layouts/video.css'
+    '~/assets/css/player.css'
   ],
   modules: ['@pinia/nuxt', '@vueuse/nuxt', '@nuxt/eslint', '@nuxtjs/color-mode'],
   // classSuffix: '' → applies a bare `.dark` / `.light` class on <html>, which is
