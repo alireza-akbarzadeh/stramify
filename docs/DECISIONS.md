@@ -607,9 +607,19 @@ rendered through `AppHeader`/`AppFooter` even though `DashboardShell.vue` and
 
 Making the dashboard real runs straight into a schema fact: **nothing links a
 `user` to the content they publish.** `clips.creator` and
-`live_streams.streamer_name` are free text, there is no `channels` table and
-no `clips.user_id` (ADR-014). So "your channel's numbers" has no foreign key
+`live_streams.streamer_name` are free text and there is no `clips.user_id`.
+A `channels` table *does* exist (added alongside the channel-pages work in the
+same commit as this ADR), but it holds identity only — display name, avatar,
+banner, tagline, bio, verified — keyed by `handle`, with **no owner column**
+pointing back at `user`. So "your channel's numbers" still has no foreign key
 to follow.
+
+> **Correction, same day**: an earlier draft of this ADR said "there is no
+> `channels` table". That was true when the dashboard work started and false
+> by the time it landed — a concurrent session added one mid-flight, recorded
+> in **ADR-018**, which deliberately keeps it identity-only and leaves the
+> handle-matched ownership below untouched. The premise is corrected here
+> rather than left to mislead the next reader; the decision is unaffected.
 
 **Decision**: Build the dashboard on real aggregations only, and resolve
 channel ownership the way the rest of the app already does — by handle.
@@ -652,3 +662,143 @@ such as `Viper_Squadron`. Renaming a channel still orphans its follows and now
 also its dashboard, the same known cost ADR-014 recorded. Analytics windows
 are capped at 90 days because `follows`/`reactions` only start when those
 tables did.
+
+## ADR-018: A `channels` table for identity only; every channel number stays derived
+
+**Status**: Accepted (2026-08-07). Narrows the rejection recorded in ADR-017.
+
+**Context**: The app needed a real channel page (`/channel/[handle]`) and a
+ranked channel directory (`/channels`): the uploader's name on a watch page had
+nowhere to click through to, and there was no way to browse channels at all —
+only clips, categories and current live sessions.
+
+A channel page shows two very different kinds of information. **Stats**
+(followers, total views, video count, live-right-now) are aggregates the
+database can already answer from `clips`, `live_streams` and `follows`.
+**Identity** (display name, banner, avatar, tagline, About text, verification,
+join date) is authored content that exists nowhere in the schema — a channel
+was only ever a free-text handle on someone else's row (ADR-014).
+
+ADR-017, earlier the same day, rejected adding a `channels` table *as a
+prerequisite for the dashboard* and read numbers through the handle instead.
+That reasoning holds for numbers. It does not answer where a banner lives.
+
+**Decision**: Add a `channels` table that stores **only** authored identity, and
+keep every countable thing derived.
+
+1. **`handle` is the primary key, stored lowercase**, and is also the URL
+   segment. `clips.creator`, `live_streams.streamer_name` and `follows.channel`
+   are unchanged free text and join against it on `lower(...)` — the same
+   case-insensitive match `readChannelSummary` and `/api/discovery/live/[streamer]`
+   already used. **No foreign keys, no backfill, no ownership change**, so
+   ADR-017's `user.name`-matched dashboard ownership keeps working untouched.
+2. **No counters in the table.** Followers, views, clip count and live status are
+   computed per request by one CTE in `server/utils/channels.ts`. There is no
+   stored total that can drift from the rows it summarises.
+3. **A channel without a row still works.** Identity falls back to the creator's
+   own casing (`Viper_Squadron` → "Viper Squadron") and the gradient avatar, so
+   a creator who has published but never written a bio has a working page.
+4. **Ranking is written down, not tuned by feel.** `top` =
+   `2·ln(1+followers) + ln(1+views) + 1.5 if live`. Both signals are logged so
+   one runaway number can't own the ranking; followers weigh double because
+   following is deliberate and a view is not. `followers`, `views`, `live` and
+   `new` are plain single-key orders. All of it runs in SQL, so `limit` is a
+   real limit rather than a slice of an already-fetched list.
+5. **Follower counts cross the wire raw** (`followerCount: number`), unlike every
+   other pre-formatted count. Following is the one number the client changes on
+   its own, and `±1` on an integer can't drift the way re-parsing `"12.4k"`
+   would. One `useFollowChannel` mutation patches all three cached shapes of a
+   channel (watch-page summary, profile, directory row).
+
+**Rejected**: *Deriving identity too* (banner = top clip's thumbnail, no bio) —
+the About tab would have nothing in it and every channel would look like a
+scrape of its own uploads. *Making `clips.creator` an FK now* — that is the
+migration-plus-backfill-plus-ownership-claim work ADR-017 correctly deferred to
+Phase 9; this table is additive and doesn't block it. *Storing follower/view
+counters on the row* — a denormalisation with no measured need and a guaranteed
+drift bug. *Ranking client-side* — makes `limit` meaningless and re-ranks on
+every keystroke.
+
+**Consequences**: Renaming a channel still orphans its follows, its dashboard
+*and* now its identity row — the same known cost as ADR-014, no worse. Seeded
+follower data comes from clearly-marked inert demo accounts
+(`scripts/seed-follows.mjs`, ids prefixed `demo-follower-`, no `account` row so
+none can sign in), because `follows.user_id` is a real FK and a follower cannot
+exist without an account; without them "most followers" would be a column of
+ties. Verification (`channels.verified`) is seed-set today — there is no
+claim/review flow, and it deliberately buys no ranking.
+
+---
+
+## ADR-019: Pinia holds shared client state; server state stays in TanStack Query
+
+**Status**: Accepted (2026-08-07). Narrows the "all state arrives as props"
+contract set for `WatchLayout` in ADR-016.
+
+**Context**: `pinia` and `@pinia/nuxt` were installed and the module was
+registered in `nuxt.config.ts`, but the codebase contained zero `defineStore`
+calls and no `app/stores/` directory. Shared client state had instead grown two
+shapes, both of which leaked into component signatures:
+
+1. **Viewer identity threaded through props.** `useAuth()` was a `useState`
+   singleton that six components already called directly — but the comment tree
+   did not. `WatchView` read the session, repacked it into a `CommentsPanel`, and
+   `canPost` / `authorName` / `authorImage` then travelled five levels
+   (`WatchView` → `WatchLayout` → `WatchComments` → `WatchCommentItem` →
+   recursive `WatchCommentItem` → `WatchCommentComposer`) to render one avatar
+   and one log-in prompt. `WatchLayout` re-emitted thirteen events it did not use.
+2. **A predicate passed as a prop.** `useWatchlist()` was called in four
+   components, each building its own `useLocalStorage` binding, and `isSaved`
+   was additionally passed *as a function* into `WatchLayout`/`WatchUpNext` and
+   `DiscoveryFeed`/`ClipGrid`/`LiveSignalsRail`. The four bindings did stay in
+   sync (VueUse dispatches a `vueuse-storage` event for same-tab instances), so
+   this was duplication rather than a bug: four serialise/parse pipelines and
+   four listeners for one logical value.
+
+**Decision**: Two stores in `app/stores/`, scoped strictly to **shared client
+state**, and no change to how server state flows.
+
+1. **`stores/auth.ts`** replaces `composables/useAuth.ts`. `plugins/auth-session.ts`
+   fills it during SSR and `@pinia/nuxt` serialises it into the payload, so this
+   is behaviourally equivalent to the `useState` it replaces — the win is that
+   leaves read identity themselves instead of receiving it.
+2. **`stores/watchlist.ts`** replaces `composables/useWatchlist.ts` and binds
+   localStorage exactly once. `items` is wrapped in **`skipHydrate`**: it
+   persists itself, so letting Pinia restore it from the SSR payload would write
+   the server's empty `[]` over the real stored list before `initOnMounted`
+   reads it. `hydrated` uses `tryOnMounted`, not `onMounted`, because a store is
+   instantiated by whichever component asks first and may have no instance to
+   bind to.
+3. **TanStack Query keeps every server-state concern.** Comments, chat, related
+   items and the watch target stay queries passed as props; the `AsyncPanel`
+   view-models keep `items`/`pending`/`errored` plus the mutation flags
+   (`posting`, `sending`). Nothing that has a cache in TanStack gets a second
+   copy in Pinia.
+4. **Grids own the save control.** `ClipGrid`, `LiveChannelGrid`,
+   `LiveSignalsRail` and `WatchUpNext` read `isSaved` and call `toggle` on the
+   store, which deletes the function prop and the `toggle-save-related` emit
+   chain. Leaf cards keep a plain `saved: boolean` prop — one hop from a
+   component that has the store, and it keeps them presentational and testable.
+5. **The fixture preview seeds stores instead of passing props.**
+   `zz-watch-preview.vue` assigns `useAuthStore().session` to preview the
+   signed-in composer. This is why `WatchLayout` can lose the props without
+   losing its fixture-driven preview.
+
+**Rejected**: *Stores for everything, including query data* — duplicates
+TanStack's cache and contradicts the client-state-only split; the panel props
+exist so each section renders its own loading/error state. *Migrating the
+dashboard* — `DashboardOverview` already fetches once and hands one level of
+data to presentational panels, which is correct prop usage, not drilling.
+*`provide`/`inject` for viewer identity* — solves the threading but gives no
+devtools, no typed actions, and still needs a provider component above every
+consumer. *Keeping `useAuth` as a wrapper over the store* — an indirection whose
+only purpose is to avoid touching eight import lines. *Moving local UI refs*
+(`range`, `search`, `activeCategory`, `sort`, `replying`) — single-component
+state that nothing else reads.
+
+**Consequences**: `WatchComments`, `WatchCommentItem`, `WatchCommentComposer`,
+`WatchChat` and the four grids are no longer pure functions of their props —
+they require an active Pinia instance, so any future spec must seed the store
+(see `WatchChat.spec.ts`, which now calls a local `signIn()`/`signOut()` instead
+of toggling a `canPost` prop). The player tree is untouched: Vidstack's custom
+elements carry their own media context and `PlayerControls` takes one boolean.

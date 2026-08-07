@@ -2,6 +2,7 @@
 import { Button } from '@/components/ui/button'
 import { useAutoGrow } from '@/composables/useAutoGrow'
 import ChannelAvatar from '@/components/ChannelAvatar.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const COMMENT_MAX_LENGTH = 1000
 
@@ -12,18 +13,18 @@ const COMMENT_MAX_LENGTH = 1000
  *
  * Actions stay hidden until the box is focused or has content, which keeps a
  * long comment list from carrying a row of dead buttons above it.
+ *
+ * The avatar comes from `stores/auth` — only ever the signed-in viewer's own,
+ * so there is nothing for a caller to pass in.
  */
 const props = withDefaults(
   defineProps<{
-    authorName: string | null
-    authorImage?: string | null
     pending?: boolean
     compact?: boolean
     placeholder?: string
     submitLabel?: string
   }>(),
   {
-    authorImage: null,
     pending: false,
     compact: false,
     placeholder: 'Add a comment…',
@@ -31,6 +32,8 @@ const props = withDefaults(
   }
 )
 const emit = defineEmits<{ (e: 'submit', body: string): void; (e: 'cancel'): void }>()
+
+const auth = useAuthStore()
 
 const draft = ref('')
 const focused = ref(false)
@@ -62,8 +65,8 @@ function cancel() {
 <template>
   <form :class="['flex gap-3', compact && 'mt-3']" @submit.prevent="submit">
     <ChannelAvatar
-      :name="authorName ?? '?'"
-      :image="authorImage"
+      :name="auth.user?.name ?? '?'"
+      :image="auth.user?.image"
       :class="compact ? 'size-7 text-[11px]' : 'size-9'"
     />
     <div class="min-w-0 flex-1">

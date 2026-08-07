@@ -8,8 +8,10 @@ behind them.
 ## The one thing to understand first
 
 **There is no link in the schema between a user and the content they
-publish.** `clips.creator` and `live_streams.streamer_name` are free text,
-there is no `channels` table, and there is no `clips.user_id` (ADR-014).
+publish.** `clips.creator` and `live_streams.streamer_name` are free text and
+there is no `clips.user_id` (ADR-014). The `channels` table (ADR-018) stores
+identity only — display name, avatar, banner, bio, verified — keyed by
+`handle`, with **no owner column** pointing back at `user`.
 
 So the dashboard resolves your channel by **handle**: `user.name` matched
 case-insensitively against `clips.creator` and `live_streams.streamer_name`.
@@ -62,7 +64,19 @@ middleware (`auth`) is the UI half; this is the server half (CLAUDE.md §5).
 
 `analytics` takes **no** `?channel=` parameter on purpose. The handle comes
 from the session; a parameter would let any signed-in user read anyone else's
-numbers, since there's no ownership table to check against.
+numbers, since no table records who owns a handle.
+
+### Overlap with `server/utils/channels.ts` — read before extending
+
+`selectChannelRows` (ADR-018) already computes followers, total views, clip
+count, live status and categories for *any* handle in one CTE.
+`readCreatorOverview` computes several of the same numbers separately, because
+it also needs raw (unformatted) view totals and the clip-id list for the
+likes/comments queries, which that CTE doesn't return.
+
+That duplication is known and deliberate for now, not an oversight. If you
+touch either, prefer widening the CTE to return raw totals and having the
+dashboard read it, over adding a third place that counts followers.
 
 ## Component tree
 

@@ -19,7 +19,7 @@ defineProps<{ clips: ClipPerformance[] }>()
          point of the table, so dropping them on a phone would leave a view-count
          list that the metric tiles already cover. -->
     <div v-else class="overflow-x-auto">
-      <table class="w-full min-w-125 text-sm">
+      <table class="w-full min-w-[500px] text-sm">
         <caption class="sr-only">Your clips ranked by lifetime views, with engagement counts</caption>
         <thead>
           <tr class="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
@@ -36,7 +36,7 @@ defineProps<{ clips: ClipPerformance[] }>()
             :key="clip.id"
             class="border-b border-border/60 last:border-0 transition-colors hover:bg-surface-2/60"
           >
-            <th scope="row" class="max-w-75 px-5 py-3 text-left font-normal">
+            <th scope="row" class="max-w-[300px] px-5 py-3 text-left font-normal">
               <NuxtLink
                 :to="`/watch/${clip.id}`"
                 class="block truncate font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

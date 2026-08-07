@@ -9,8 +9,15 @@ import * as fixtures from '@/components/watch/__fixtures__/watch'
 import type { CommentSort } from '#shared/types/watch'
 import WatchLayout from '@/components/watch/WatchLayout.vue'
 import { Button } from '@/components/ui/button'
+import { useAuthStore } from '@/stores/auth'
 
 useHead({ title: 'Watch preview (temp)' })
+
+// Viewer identity is client state, so the signed-in variants (composer, chat
+// box) are previewed by seeding the store rather than passing props down.
+useAuthStore().session = {
+  user: { name: 'Preview_Viewer', email: 'preview@streamify.test' }
+}
 
 const mode = ref<'clip' | 'live'>('clip')
 const sort = ref<CommentSort>('top')
@@ -24,22 +31,8 @@ const engagement = {
   followPending: false
 }
 const related = { items: fixtures.relatedItems, pending: false, errored: false }
-const comments = {
-  items: fixtures.comments,
-  pending: false,
-  errored: false,
-  canPost: true,
-  authorName: 'Preview_Viewer',
-  authorImage: null,
-  posting: false
-}
-const chat = {
-  items: fixtures.chatMessages,
-  pending: false,
-  errored: false,
-  canPost: true,
-  sending: false
-}
+const comments = { items: fixtures.comments, pending: false, errored: false, posting: false }
+const chat = { items: fixtures.chatMessages, pending: false, errored: false, sending: false }
 </script>
 
 <template>
@@ -65,7 +58,6 @@ const chat = {
         :related="related"
         :comments="comments"
         :chat="chat"
-        :is-saved="() => false"
       />
     </div>
     <AppFooter />

@@ -91,19 +91,24 @@ async function selectLiveSession(handle: string) {
 }
 
 export async function readCreatorOverview(handle: string): Promise<CreatorOverview> {
+  // Empty fallbacks are typed explicitly rather than left as `never[]`, so the
+  // ternaries below don't hand TypeScript a union it has to narrow at each use.
+  const noClips: Array<{ id: string; views: number }> = []
+  const noCounts: Array<{ total: number }> = []
+
   const [clipRows, followerRows, live] = await Promise.all([
     handle
       ? db
           .select({ id: clips.id, views: clips.views })
           .from(clips)
           .where(sql`lower(${clips.creator}) = lower(${handle})`)
-      : Promise.resolve([]),
+      : Promise.resolve(noClips),
     handle
       ? db
           .select({ total: count(follows.id) })
           .from(follows)
           .where(sql`lower(${follows.channel}) = lower(${handle})`)
-      : Promise.resolve([]),
+      : Promise.resolve(noCounts),
     selectLiveSession(handle)
   ])
 

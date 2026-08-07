@@ -4,6 +4,7 @@ import type { CommentDraft, WatchComment } from '#shared/types/watch'
 import { formatCount } from '#shared/utils/format'
 import { Button } from '@/components/ui/button'
 import ChannelAvatar from '@/components/ChannelAvatar.vue'
+import { useAuthStore } from '@/stores/auth'
 import WatchCommentComposer from './WatchCommentComposer.vue'
 
 /**
@@ -14,9 +15,6 @@ import WatchCommentComposer from './WatchCommentComposer.vue'
 defineProps<{
   comment: WatchComment
   nested?: boolean
-  canPost: boolean
-  authorName: string | null
-  authorImage: string | null
   posting: boolean
 }>()
 const emit = defineEmits<{
@@ -24,6 +22,7 @@ const emit = defineEmits<{
   (e: 'reply', draft: CommentDraft): void
 }>()
 
+const auth = useAuthStore()
 const replying = ref(false)
 
 function send(body: string, parentId: string) {
@@ -88,10 +87,8 @@ function send(body: string, parentId: string) {
       </div>
 
       <WatchCommentComposer
-        v-if="replying && canPost"
+        v-if="replying && auth.isAuthenticated"
         compact
-        :author-name="authorName"
-        :author-image="authorImage"
         :pending="posting"
         :placeholder="`Replying to ${comment.authorName}…`"
         submit-label="Reply"
@@ -109,9 +106,6 @@ function send(body: string, parentId: string) {
           :key="reply.id"
           nested
           :comment="reply"
-          :can-post="canPost"
-          :author-name="authorName"
-          :author-image="authorImage"
           :posting="posting"
           @like="emit('like', $event)"
           @remove="emit('remove', $event)"

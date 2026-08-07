@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useDiscoveryClips } from '@/composables/useDiscoveryClips'
 import { useLiveSignals } from '@/composables/useLiveSignals'
-import { useWatchlist } from '@/composables/useWatchlist'
-import { clipToItem, liveToItem } from '@/utils/watchlist'
+import { useWatchlistStore } from '@/stores/watchlist'
+import { clipToItem } from '@/utils/watchlist'
 import FeaturedClip from './FeaturedClip.vue'
 import LiveSignalsRail from './LiveSignalsRail.vue'
 import ClipGrid from './ClipGrid.vue'
@@ -21,7 +21,7 @@ const {
   refetch: refetchClips
 } = useDiscoveryClips()
 const { data: liveSignalsData, isPending: livePending } = useLiveSignals()
-const { items: saved, hydrated, isSaved, toggle, remove, clear } = useWatchlist()
+const watchlist = useWatchlistStore()
 
 const view = ref<'feed' | 'watchlist'>('feed')
 const search = ref('')
@@ -41,9 +41,6 @@ const filteredClips = computed(() => {
     return matchesCategory && matchesSearch
   })
 })
-
-const savedClips = computed(() => saved.value.filter((item) => item.kind === 'clip'))
-const savedLive = computed(() => saved.value.filter((item) => item.kind === 'live'))
 
 /**
  * Everything playable now has a URL — `/watch/[slug]`, where the slug is a
@@ -89,9 +86,9 @@ function openClip(clip: Clip) {
         >
           Watchlist
           <span
-            v-if="hydrated && saved.length"
+            v-if="watchlist.hydrated && watchlist.items.length"
             class="ml-1 rounded-sm bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground"
-            >{{ saved.length }}</span
+            >{{ watchlist.items.length }}</span
           >
         </Button>
       </div>
@@ -124,12 +121,7 @@ function openClip(clip: Clip) {
 
     <WatchlistPanel
       v-if="view === 'watchlist'"
-      :saved-clips="savedClips"
-      :saved-live="savedLive"
-      :hydrated="hydrated"
       @open="openSaved"
-      @remove="remove"
-      @clear="clear"
       @browse="view = 'feed'"
     />
 
@@ -148,9 +140,9 @@ function openClip(clip: Clip) {
         v-else-if="featured"
         class="mb-12"
         :clip="featured"
-        :saved="isSaved(featured.id)"
+        :saved="watchlist.isSaved(featured.id)"
         @play="openClip(featured)"
-        @toggle-save="toggle(clipToItem(featured))"
+        @toggle-save="watchlist.toggle(clipToItem(featured))"
       />
 
       <div v-if="livePending" class="mb-12 flex gap-4">
@@ -164,17 +156,13 @@ function openClip(clip: Clip) {
         v-else-if="liveSignals.length"
         class="mb-12"
         :signals="liveSignals"
-        :is-saved="isSaved"
         @play="openLive"
-        @toggle-save="toggle(liveToItem($event))"
       />
 
       <ClipGrid
         v-model:active-category="activeCategory"
         :clips="filteredClips"
-        :is-saved="isSaved"
         @play="openClip"
-        @toggle-save="toggle(clipToItem($event))"
       />
     </template>
   </div>

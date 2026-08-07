@@ -1,5 +1,5 @@
 <script setup lang="ts">
-export type ChannelTab = 'home' | 'videos' | 'live' | 'about'
+import type { ChannelTab } from '@/composables/useChannelTab'
 
 /**
  * Channel section switcher. Sticky under the app header so the tabs stay

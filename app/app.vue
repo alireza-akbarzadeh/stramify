@@ -7,7 +7,15 @@
       Skip to content
     </a>
     <NuxtRouteAnnouncer />
-    <NuxtPage />
+    <!--
+      `app.vue` exists, so layouts only apply if `NuxtPage` is wrapped in
+      `NuxtLayout` — without this every page renders bare and has to build its
+      own chrome (which is how `/live`, `/clips` etc. lost the app sidebar).
+      https://nuxt.com/docs/4.x/directory-structure/app/layouts
+    -->
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
     <Toaster rich-colors close-button />
   </div>
 </template>

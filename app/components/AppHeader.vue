@@ -1,15 +1,19 @@
 <script setup lang="ts">
-import { Menu, X } from '@lucide/vue'
+import { storeToRefs } from 'pinia'
 import { Button } from '@/components/ui/button'
+import { useAuthStore } from '@/stores/auth'
 import { useScrollHeader } from '@/composables/useScrollHeader'
-import { useAuth } from '@/composables/useAuth'
+import { Menu, X } from '@lucide/vue'
 
 const open = ref(false)
 const { scrolled, hidden } = useScrollHeader()
-const { user } = useAuth()
+const { user } = storeToRefs(useAuthStore())
 
 const navLinks = [
   { label: 'Live', to: '/live' },
+  { label: 'Channels', to: '/channels' },
+  { label: 'Shorts', to: '/shorts' },
+  { label: 'Stream', to: '/dashboard/stream' },
   { label: 'Categories', to: '/category' },
   { label: 'Following', to: '/following' },
   { label: 'Clips', to: '/clips' }
@@ -24,7 +28,10 @@ const navLinks = [
       scrolled ? 'border-b border-border bg-glass backdrop-blur-xl' : 'border-b border-transparent'
     ]"
   >
-    <nav class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8" aria-label="Primary">
+    <nav
+      class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+      aria-label="Primary"
+    >
       <BrandMark />
 
       <ul class="hidden items-center gap-1 md:flex">
@@ -68,7 +75,11 @@ const navLinks = [
       </div>
     </nav>
 
-    <div v-if="open" id="mobile-nav" class="border-t border-border bg-glass px-4 py-4 backdrop-blur-xl md:hidden">
+    <div
+      v-if="open"
+      id="mobile-nav"
+      class="border-t border-border bg-glass px-4 py-4 backdrop-blur-xl md:hidden"
+    >
       <ul class="flex flex-col gap-1">
         <li v-for="link in navLinks" :key="link.to">
           <NuxtLink

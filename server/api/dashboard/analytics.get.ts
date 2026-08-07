@@ -4,8 +4,10 @@ import { channelHandle, readDashboardAnalytics } from '../../utils/dashboard'
 import { ANALYTICS_RANGES } from '#shared/utils/trend'
 import type { DashboardAnalytics } from '#shared/types/dashboard'
 
+// Spread into a mutable tuple: `ANALYTICS_RANGES` is `readonly`, and that is
+// the one shape `z.enum` has historically been fussy about.
 const querySchema = z.object({
-  range: z.enum(ANALYTICS_RANGES).default('30d')
+  range: z.enum([...ANALYTICS_RANGES]).default('30d')
 })
 
 /**

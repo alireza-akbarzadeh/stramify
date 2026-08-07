@@ -2,6 +2,7 @@
 import type { CommentDraft, CommentSort, WatchComment } from '#shared/types/watch'
 import { Button } from '@/components/ui/button'
 import { countComments } from '@/utils/comments'
+import { useAuthStore } from '@/stores/auth'
 import WatchCommentComposer from './WatchCommentComposer.vue'
 import WatchCommentItem from './WatchCommentItem.vue'
 
@@ -9,11 +10,10 @@ const props = defineProps<{
   comments: WatchComment[]
   pending: boolean
   errored: boolean
-  canPost: boolean
-  authorName: string | null
-  authorImage: string | null
   posting: boolean
 }>()
+
+const auth = useAuthStore()
 const sort = defineModel<CommentSort>('sort', { required: true })
 const emit = defineEmits<{
   (e: 'retry'): void
@@ -52,10 +52,8 @@ const total = computed(() => countComments(props.comments))
     </div>
 
     <WatchCommentComposer
-      v-if="canPost"
+      v-if="auth.isAuthenticated"
       class="mb-8"
-      :author-name="authorName"
-      :author-image="authorImage"
       :pending="posting"
       @submit="emit('post', { body: $event, parentId: null })"
     />
@@ -89,7 +87,7 @@ const total = computed(() => countComments(props.comments))
       v-else-if="!comments.length"
       class="rounded-lg border border-dashed border-border py-12 text-center text-sm text-muted-foreground"
     >
-      No comments on this one yet. {{ canPost ? 'Be the first.' : '' }}
+      No comments on this one yet. {{ auth.isAuthenticated ? 'Be the first.' : '' }}
     </p>
 
     <div v-else class="space-y-6">
@@ -97,9 +95,6 @@ const total = computed(() => countComments(props.comments))
         v-for="comment in comments"
         :key="comment.id"
         :comment="comment"
-        :can-post="canPost"
-        :author-name="authorName"
-        :author-image="authorImage"
         :posting="posting"
         @like="emit('like', $event)"
         @remove="emit('remove', $event)"

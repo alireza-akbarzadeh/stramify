@@ -2,17 +2,20 @@
 import type { LiveSignal } from '#shared/types/discovery'
 import { Button } from '@/components/ui/button'
 import { LIVE_CATEGORIES, type LiveCategory } from '@/utils/live'
+import { useWatchlistStore } from '@/stores/watchlist'
+import { liveToItem } from '@/utils/watchlist'
 import LiveChannelCard from './LiveChannelCard.vue'
 
 defineProps<{
   signals: LiveSignal[]
   activeCategory: LiveCategory
-  isSaved: (id: string) => boolean
 }>()
 const emit = defineEmits<{
   (e: 'update:activeCategory', category: LiveCategory): void
-  (e: 'play' | 'toggle-save', signal: LiveSignal): void
+  (e: 'play', signal: LiveSignal): void
 }>()
+
+const watchlist = useWatchlistStore()
 </script>
 
 <template>
@@ -45,9 +48,9 @@ const emit = defineEmits<{
         v-for="signal in signals"
         :key="signal.id"
         :signal="signal"
-        :saved="isSaved(signal.id)"
+        :saved="watchlist.isSaved(signal.id)"
         @play="emit('play', signal)"
-        @toggle-save="emit('toggle-save', signal)"
+        @toggle-save="watchlist.toggle(liveToItem(signal))"
       />
     </div>
     <div v-else class="rounded-lg border border-dashed border-border py-16 text-center">

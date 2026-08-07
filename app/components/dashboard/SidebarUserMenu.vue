@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuRoot, DropdownMenuSeparator, DropdownMenuTrigger } from 'reka-ui'
-import { BadgeCheck, ChevronsUpDown, LogOut, ShieldCheck, ShieldHalf } from '@lucide/vue'
+import { BadgeCheck, ChevronsUpDown, LogIn, LogOut, ShieldCheck, ShieldHalf } from '@lucide/vue'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar'
-import { useAuth } from '@/composables/useAuth'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/stores/auth'
 
-const { user, signOut } = useAuth()
+const auth = useAuthStore()
+const { user } = storeToRefs(auth)
+const { signOut } = auth
 const { isMobile } = useSidebar()
 
 const initial = computed(() => (user.value?.name || user.value?.email || '?').charAt(0).toUpperCase())
@@ -17,7 +20,26 @@ const links = [
 
 <template>
   <SidebarMenu>
-    <SidebarMenuItem>
+    <!--
+      The shell is on public routes too (`/live`, `/clips`, `/watch/...`), so
+      the footer has to have something to say to a signed-out visitor rather
+      than rendering an account menu with no account behind it.
+    -->
+    <SidebarMenuItem v-if="!user">
+      <SidebarMenuButton as-child size="lg" tooltip="Log in">
+        <NuxtLink to="/login">
+          <span class="grid size-8 shrink-0 place-items-center rounded-full border border-sidebar-border bg-background text-foreground">
+            <LogIn class="size-4" aria-hidden="true" />
+          </span>
+          <span class="grid flex-1 text-left text-sm leading-tight">
+            <span class="truncate font-medium">Log in</span>
+            <span class="truncate text-xs text-muted-foreground">Follow channels and go live</span>
+          </span>
+        </NuxtLink>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+
+    <SidebarMenuItem v-else>
       <DropdownMenuRoot>
         <DropdownMenuTrigger as-child>
           <SidebarMenuButton

@@ -3,14 +3,11 @@ import type { LiveSignal } from '#shared/types/discovery'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useLiveSignals } from '@/composables/useLiveSignals'
-import { useWatchlist } from '@/composables/useWatchlist'
 import { filterLiveSignals, type LiveCategory } from '@/utils/live'
-import { liveToItem } from '@/utils/watchlist'
 import { Search, X } from '@lucide/vue'
 import LiveChannelGrid from './LiveChannelGrid.vue'
 
 const { data, isPending, isError, refetch } = useLiveSignals()
-const { isSaved, toggle } = useWatchlist()
 
 const search = ref('')
 const activeCategory = ref<LiveCategory>('All Live')
@@ -96,9 +93,7 @@ function open(signal: LiveSignal) {
       v-else
       v-model:active-category="activeCategory"
       :signals="visible"
-      :is-saved="isSaved"
       @play="open"
-      @toggle-save="toggle(liveToItem($event))"
     />
   </div>
 </template>

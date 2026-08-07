@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ArrowLeft } from '@lucide/vue'
+import { storeToRefs } from 'pinia'
 import { toast } from 'vue-sonner'
-import type { CommentDraft, CommentSort, ReactionValue, RelatedItem } from '#shared/types/watch'
+import type { CommentDraft, CommentSort, ReactionValue } from '#shared/types/watch'
 import { Button } from '@/components/ui/button'
 import { useWatchTarget, useWatchRelated } from '@/composables/useWatchTarget'
 import { useWatchComments } from '@/composables/useWatchComments'
@@ -10,9 +11,9 @@ import { useWatchChat } from '@/composables/useWatchChat'
 import { useWatchReaction } from '@/composables/useWatchEngagement'
 import { useChannelFollow } from '@/composables/useChannel'
 import { useViewCounter } from '@/composables/useViewCounter'
-import { useAuth } from '@/composables/useAuth'
-import { useWatchlist } from '@/composables/useWatchlist'
-import { relatedToItem, watchTargetToItem } from '@/utils/watchlist'
+import { useAuthStore } from '@/stores/auth'
+import { useWatchlistStore } from '@/stores/watchlist'
+import { watchTargetToItem } from '@/utils/watchlist'
 import WatchLayout from './WatchLayout.vue'
 import WatchSkeleton from './WatchSkeleton.vue'
 
@@ -33,13 +34,15 @@ const channelName = computed(() => target.data.value?.channel ?? '')
 const { reactions, toggle: react } = useWatchReaction(slug)
 const { channel, toggle: follow } = useChannelFollow(channelName)
 const { count } = useViewCounter(slug)
-const { user } = useAuth()
-const { isSaved, toggle: toggleSave } = useWatchlist()
+const { user } = storeToRefs(useAuthStore())
+const watchlist = useWatchlistStore()
 
 const notFound = computed(
   () => (target.error.value as { statusCode?: number } | null)?.statusCode === 404
 )
-const saved = computed(() => (target.data.value ? isSaved(target.data.value.id) : false))
+const saved = computed(() =>
+  target.data.value ? watchlist.isSaved(target.data.value.id) : false
+)
 
 const engagement = computed(() => ({
   channel: channel.value,
@@ -57,16 +60,12 @@ const commentsPanel = computed(() => ({
   items: comments.data.value ?? [],
   pending: comments.isPending.value,
   errored: comments.isError.value,
-  canPost: !!user.value,
-  authorName: user.value?.name ?? null,
-  authorImage: user.value?.image ?? null,
   posting: commentActions.post.isPending.value
 }))
 const chatPanel = computed(() => ({
   items: chat.messages.value,
   pending: chat.query.isPending.value,
   errored: chat.query.isError.value,
-  canPost: !!user.value,
   sending: chat.send.isPending.value
 }))
 
@@ -75,7 +74,7 @@ useHead({
 })
 
 function onSave() {
-  if (target.data.value) toggleSave(watchTargetToItem(target.data.value))
+  if (target.data.value) watchlist.toggle(watchTargetToItem(target.data.value))
 }
 function onReact(value: ReactionValue) {
   if (!user.value) return toast.error('Log in to react to this video.')
@@ -107,9 +106,6 @@ function onShare() {
     .writeText(window.location.href)
     .then(() => toast.success('Link copied to clipboard'))
     .catch(() => toast.error("Couldn't copy the link"))
-}
-function onSaveRelated(item: RelatedItem) {
-  toggleSave(relatedToItem(item))
 }
 </script>
 
@@ -153,7 +149,6 @@ function onSaveRelated(item: RelatedItem) {
       :related="relatedPanel"
       :comments="commentsPanel"
       :chat="chatPanel"
-      :is-saved="isSaved"
       @play-start="count()"
       @react="onReact"
       @toggle-save="onSave"
@@ -163,7 +158,6 @@ function onSaveRelated(item: RelatedItem) {
       @post-comment="onPostComment"
       @like-comment="onLikeComment"
       @remove-comment="onRemoveComment"
-      @toggle-save-related="onSaveRelated"
       @retry-related="related.refetch()"
       @retry-comments="comments.refetch()"
       @retry-chat="chat.query.refetch()"

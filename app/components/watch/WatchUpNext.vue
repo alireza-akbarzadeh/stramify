@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import type { RelatedItem } from '#shared/types/watch'
 import { Button } from '@/components/ui/button'
+import { useWatchlistStore } from '@/stores/watchlist'
+import { relatedToItem } from '@/utils/watchlist'
 import WatchUpNextCard from './WatchUpNextCard.vue'
 
 defineProps<{
   items: RelatedItem[]
   pending: boolean
   errored: boolean
-  isSaved: (id: string) => boolean
 }>()
-const emit = defineEmits<{ (e: 'retry'): void; (e: 'toggle-save', item: RelatedItem): void }>()
+const emit = defineEmits<{ (e: 'retry'): void }>()
+
+const watchlist = useWatchlistStore()
 </script>
 
 <template>
@@ -48,8 +51,8 @@ const emit = defineEmits<{ (e: 'retry'): void; (e: 'toggle-save', item: RelatedI
         v-for="item in items"
         :key="item.id"
         :item="item"
-        :saved="isSaved(item.id)"
-        @toggle-save="emit('toggle-save', item)"
+        :saved="watchlist.isSaved(item.id)"
+        @toggle-save="watchlist.toggle(relatedToItem(item))"
       />
     </div>
   </section>

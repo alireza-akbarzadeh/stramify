@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { Lock, LogOut, ShieldCheck } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import { storeToRefs } from 'pinia'
 import { authClient } from '@/lib/auth-client'
-import { useAuth } from '@/composables/useAuth'
+import { useAuthStore } from '@/stores/auth'
 
 definePageMeta({ middleware: 'auth' })
 useHead({ title: 'Security — Streamify' })
 
-const { user, signOut } = useAuth()
+const auth = useAuthStore()
+const { user } = storeToRefs(auth)
+const { signOut } = auth
 
 const current = ref('')
 const next = ref('')

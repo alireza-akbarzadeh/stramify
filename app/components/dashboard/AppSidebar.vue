@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
-import { BarChart3, Compass, Grid2x2, Heart, Home, Radio, Video } from '@lucide/vue'
+import { BarChart3, Compass, Grid2x2, Heart, Home, LayoutDashboard, Radio, Tv, Video } from '@lucide/vue'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/stores/auth'
 import {
   Sidebar,
   SidebarContent,
@@ -20,24 +22,33 @@ import SidebarUserMenu from './SidebarUserMenu.vue'
 
 const route = useRoute()
 const { state, isMobile } = useSidebar()
+const { isAuthenticated } = storeToRefs(useAuthStore())
 
 const browseLinks = [
-  { to: '/dashboard', label: 'Overview', icon: Home },
+  { to: '/', label: 'Home', icon: Home },
   { to: '/live', label: 'Live', icon: Radio },
   { to: '/clips', label: 'Clips', icon: Video },
   { to: '/category', label: 'Categories', icon: Grid2x2 },
+  { to: '/channels', label: 'Channels', icon: Tv },
   { to: '/following', label: 'Following', icon: Heart }
 ]
 
 // `badge` marks a route that is still a placeholder. Analytics carries none
-// any more — it reads real aggregations now.
+// any more — it reads real aggregations now. Every route here is behind the
+// `auth` middleware, so the whole group is hidden when signed out rather than
+// offering links that only bounce the visitor to `/login`.
 const creatorLinks: Array<{ to: string; label: string; icon: Component; badge?: string }> = [
+  { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { to: '/dashboard/stream', label: 'Go live', icon: Compass, badge: 'Phase 7' },
   { to: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 }
 ]
 
+/**
+ * `/` and `/dashboard` match exactly — as prefixes they'd light up for every
+ * route and for their own children respectively.
+ */
 function isActive(to: string) {
-  return to === '/dashboard' ? route.path === to : route.path.startsWith(to)
+  return to === '/' || to === '/dashboard' ? route.path === to : route.path.startsWith(to)
 }
 </script>
 
@@ -78,7 +89,7 @@ function isActive(to: string) {
         </SidebarGroupContent>
       </SidebarGroup>
 
-      <SidebarGroup>
+      <SidebarGroup v-if="isAuthenticated">
         <SidebarGroupLabel>Creator tools</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>

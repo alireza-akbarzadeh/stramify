@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { Clip, ClipCategory } from '#shared/types/discovery'
 import { Button } from '@/components/ui/button'
+import { useWatchlistStore } from '@/stores/watchlist'
+import { clipToItem } from '@/utils/watchlist'
 import ClipCard from './ClipCard.vue'
 
 type Category = ClipCategory | 'All Clips'
@@ -10,12 +12,13 @@ const categories: Category[] = ['All Clips', 'Music', 'Gaming', 'Creative']
 defineProps<{
   clips: Clip[]
   activeCategory: Category
-  isSaved: (id: string) => boolean
 }>()
 const emit = defineEmits<{
   (e: 'update:activeCategory', category: Category): void
-  (e: 'play' | 'toggle-save', clip: Clip): void
+  (e: 'play', clip: Clip): void
 }>()
+
+const watchlist = useWatchlistStore()
 </script>
 
 <template>
@@ -46,9 +49,9 @@ const emit = defineEmits<{
         v-for="clip in clips"
         :key="clip.id"
         :clip="clip"
-        :saved="isSaved(clip.id)"
+        :saved="watchlist.isSaved(clip.id)"
         @play="emit('play', clip)"
-        @toggle-save="emit('toggle-save', clip)"
+        @toggle-save="watchlist.toggle(clipToItem(clip))"
       />
     </div>
     <div v-else class="rounded-lg border border-dashed border-border py-16 text-center">

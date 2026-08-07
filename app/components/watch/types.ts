@@ -12,6 +12,11 @@ import type {
  * bundled with its own pending/errored flags so the layout stays presentational
  * and every section can render its own loading/empty/error state independently
  * (one slow query never blanks the whole page).
+ *
+ * These carry *server* state only (TanStack Query results). Viewer identity —
+ * who is signed in, whose avatar the composer shows, whether posting is allowed
+ * — is client state and comes from `stores/auth`, read by the leaf that needs
+ * it rather than threaded through the layout.
  */
 export interface AsyncPanel<T> {
   items: T[]
@@ -30,16 +35,9 @@ export interface WatchEngagement {
 export type RelatedPanel = AsyncPanel<RelatedItem>
 
 export interface CommentsPanel extends AsyncPanel<WatchComment> {
-  /** False when signed out — the composer swaps for a log-in prompt. */
-  canPost: boolean
-  /** Who the composer's avatar belongs to; null when signed out. */
-  authorName: string | null
-  authorImage: string | null
   posting: boolean
 }
 
 export interface ChatPanel extends AsyncPanel<ChatMessage> {
-  /** False when signed out — the composer swaps for a log-in prompt. */
-  canPost: boolean
   sending: boolean
 }

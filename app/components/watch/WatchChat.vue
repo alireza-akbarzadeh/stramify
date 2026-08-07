@@ -4,6 +4,7 @@ import type { ChatMessage } from '#shared/types/watch'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useStickyScroll } from '@/composables/useStickyScroll'
+import { useAuthStore } from '@/stores/auth'
 import WatchChatMessage from './WatchChatMessage.vue'
 
 const CHAT_MAX_LENGTH = 200
@@ -12,16 +13,16 @@ const props = defineProps<{
   messages: ChatMessage[]
   pending: boolean
   errored: boolean
-  canPost: boolean
   sending?: boolean
 }>()
 const emit = defineEmits<{ (e: 'send', body: string): void; (e: 'retry'): void }>()
 
+const auth = useAuthStore()
 const draft = ref('')
 const list = ref<HTMLElement | null>(null)
 const { pinned, onScroll, scrollToBottom } = useStickyScroll(list, () => props.messages.length)
 
-const canSend = computed(() => props.canPost && !props.sending && !!draft.value.trim())
+const canSend = computed(() => auth.isAuthenticated && !props.sending && !!draft.value.trim())
 
 function send() {
   if (!canSend.value) return
@@ -92,7 +93,7 @@ function send() {
     </div>
 
     <form class="border-t border-border p-3" @submit.prevent="send">
-      <div v-if="canPost" class="flex items-center gap-2">
+      <div v-if="auth.isAuthenticated" class="flex items-center gap-2">
         <Input
           v-model="draft"
           :maxlength="CHAT_MAX_LENGTH"

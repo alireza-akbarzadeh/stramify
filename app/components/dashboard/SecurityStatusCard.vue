@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { AlertCircle, Check, ShieldCheck } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/composables/useAuth'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/stores/auth'
 
-const { user } = useAuth()
+const { user } = storeToRefs(useAuthStore())
 
 const checklist = computed(() => [
   {

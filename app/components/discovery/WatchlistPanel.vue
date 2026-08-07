@@ -1,21 +1,25 @@
 <script setup lang="ts">
 import { Trash2 } from '@lucide/vue'
+import { storeToRefs } from 'pinia'
 import type { WatchlistItem } from '#shared/types/discovery'
 import { Button } from '@/components/ui/button'
+import { useWatchlistStore } from '@/stores/watchlist'
 import WatchlistCard from './WatchlistCard.vue'
 
-const props = defineProps<{
-  savedClips: WatchlistItem[]
-  savedLive: WatchlistItem[]
-  hydrated: boolean
-}>()
+/**
+ * Reads the saved list straight from the store — it *is* the watchlist view, so
+ * there's nothing for a parent to hand it. `open` still emits: where a saved
+ * item navigates to is the feed's concern, not the panel's.
+ */
 const emit = defineEmits<{
   (e: 'open', item: WatchlistItem): void
-  (e: 'remove', id: string): void
-  (e: 'clear' | 'browse'): void
+  (e: 'browse'): void
 }>()
 
-const total = computed(() => props.savedClips.length + props.savedLive.length)
+const watchlist = useWatchlistStore()
+const { hydrated, savedClips, savedLive } = storeToRefs(watchlist)
+
+const total = computed(() => savedClips.value.length + savedLive.value.length)
 </script>
 
 <template>
@@ -41,7 +45,7 @@ const total = computed(() => props.savedClips.length + props.savedLive.length)
         type="button"
         variant="outline"
         size="sm"
-        @click="emit('clear')"
+        @click="watchlist.clear()"
       >
         <Trash2 /> Clear all
       </Button>
@@ -73,7 +77,7 @@ const total = computed(() => props.savedClips.length + props.savedLive.length)
           :item="item"
           live
           @open="emit('open', item)"
-          @remove="emit('remove', item.id)"
+          @remove="watchlist.remove(item.id)"
         />
       </div>
     </div>
@@ -86,7 +90,7 @@ const total = computed(() => props.savedClips.length + props.savedLive.length)
           :key="item.id"
           :item="item"
           @open="emit('open', item)"
-          @remove="emit('remove', item.id)"
+          @remove="watchlist.remove(item.id)"
         />
       </div>
     </div>

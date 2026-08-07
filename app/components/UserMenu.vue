@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuRoot, DropdownMenuSeparator, DropdownMenuTrigger } from 'reka-ui'
 import { BadgeCheck, LayoutDashboard, LogOut, ShieldCheck, ShieldHalf } from '@lucide/vue'
-import { useAuth } from '@/composables/useAuth'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/stores/auth'
 
-const { user, signOut } = useAuth()
+const auth = useAuthStore()
+const { user } = storeToRefs(auth)
+const { signOut } = auth
 
 const initial = computed(() => (user.value?.name || user.value?.email || '?').charAt(0).toUpperCase())
 

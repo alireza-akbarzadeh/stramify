@@ -1,11 +1,5 @@
 <script setup lang="ts">
-import type {
-  CommentDraft,
-  CommentSort,
-  ReactionValue,
-  RelatedItem,
-  WatchTarget
-} from '#shared/types/watch'
+import type { CommentDraft, CommentSort, ReactionValue, WatchTarget } from '#shared/types/watch'
 import type { ChatPanel, CommentsPanel, RelatedPanel, WatchEngagement } from './types'
 import WatchPlayer from './WatchPlayer.vue'
 import WatchMeta from './WatchMeta.vue'
@@ -19,7 +13,13 @@ import WatchUpNext from './WatchUpNext.vue'
 /**
  * Presentational shell for the watch page. Holds no data-fetching of its own so
  * it can be driven either by `WatchView.vue` (real APIs) or by the fixtures on
- * `/zz-watch-preview`. All state arrives as props; every interaction emits.
+ * `/zz-watch-preview`. Server state arrives as props; every interaction emits.
+ *
+ * Client state is the exception: viewer identity (`stores/auth`) and the saved
+ * list (`stores/watchlist`) are read by the leaves that need them. Threading
+ * those through here meant `authorName`/`authorImage`/`canPost` travelling five
+ * levels to reach the comment composer, and `isSaved` being passed as a
+ * function prop. The preview page sets the stores instead of passing props.
  *
  * Layout: one column below `lg`, two columns at `lg` and up. The aside is a
  * normal block in the mobile flow, which is what puts the sidebar *below the
@@ -32,7 +32,6 @@ defineProps<{
   related: RelatedPanel
   comments: CommentsPanel
   chat: ChatPanel
-  isSaved: (id: string) => boolean
 }>()
 
 const sort = defineModel<CommentSort>('sort', { required: true })
@@ -40,7 +39,6 @@ const sort = defineModel<CommentSort>('sort', { required: true })
 defineEmits<{
   (e: 'react', value: ReactionValue): void
   (e: 'send-chat', body: string): void
-  (e: 'toggle-save-related', item: RelatedItem): void
   (e: 'post-comment', draft: CommentDraft): void
   (e: 'like-comment' | 'remove-comment', id: string): void
   (e: 'play-start' | 'toggle-save' | 'share' | 'toggle-follow'): void
@@ -87,7 +85,6 @@ defineEmits<{
           :messages="chat.items"
           :pending="chat.pending"
           :errored="chat.errored"
-          :can-post="chat.canPost"
           :sending="chat.sending"
           @send="$emit('send-chat', $event)"
           @retry="$emit('retry-chat')"
@@ -96,9 +93,7 @@ defineEmits<{
           :items="related.items"
           :pending="related.pending"
           :errored="related.errored"
-          :is-saved="isSaved"
           @retry="$emit('retry-related')"
-          @toggle-save="$emit('toggle-save-related', $event)"
         />
       </div>
     </aside>
@@ -109,9 +104,6 @@ defineEmits<{
         :comments="comments.items"
         :pending="comments.pending"
         :errored="comments.errored"
-        :can-post="comments.canPost"
-        :author-name="comments.authorName"
-        :author-image="comments.authorImage"
         :posting="comments.posting"
         @retry="$emit('retry-comments')"
         @post="$emit('post-comment', $event)"

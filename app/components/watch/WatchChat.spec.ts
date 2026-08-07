@@ -1,16 +1,27 @@
 // @vitest-environment nuxt
 import { mountSuspended } from '@nuxt/test-utils/runtime'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { ChatMessage } from '#shared/types/watch'
+import { useAuthStore } from '@/stores/auth'
 import WatchChat from './WatchChat.vue'
 
 const messages: ChatMessage[] = [
   { id: 'chat-1', authorName: 'kev', body: 'that flank was filthy', createdAt: new Date().toISOString() }
 ]
 
-const base = { messages, pending: false, errored: false, canPost: true }
+const base = { messages, pending: false, errored: false }
+
+/** Whether the composer renders is read from the auth store, not a prop. */
+function signIn() {
+  useAuthStore().session = { user: { name: 'kev', email: 'kev@streamify.test' } }
+}
+function signOut() {
+  useAuthStore().session = null
+}
 
 describe('WatchChat', () => {
+  beforeEach(signIn)
+
   it('renders messages with their author', async () => {
     const wrapper = await mountSuspended(WatchChat, { props: base })
     expect(wrapper.text()).toContain('kev')
@@ -19,7 +30,8 @@ describe('WatchChat', () => {
   })
 
   it('swaps the composer for a log-in prompt when signed out', async () => {
-    const wrapper = await mountSuspended(WatchChat, { props: { ...base, canPost: false } })
+    signOut()
+    const wrapper = await mountSuspended(WatchChat, { props: base })
     expect(wrapper.find('input').exists()).toBe(false)
     expect(wrapper.text()).toContain('to join the chat')
   })

@@ -262,3 +262,187 @@ full picture.
    done (§20 point 4 in CLAUDE.md — loading/empty/error states, real
    backend, validation, auth, tests, a11y) rather than assuming their
    existence means they're finished.
+
+---
+
+## Dashboard session, 2026-08-07 (appended — see also the channels session)
+
+**Built**: `/dashboard` and `/dashboard/analytics` are real. Full write-up in
+[dashboard.md](./dashboard.md), decisions in ADR-017.
+
+- Both pages now render inside `DashboardShell` (the sidebar shell that
+  already existed unused) instead of `AppHeader`/`AppFooter`.
+- `/dashboard/analytics` is no longer a `ComingSoon` placeholder — it has real
+  follower and engagement trends, a top-clips table and a category mix, over a
+  7d/30d/90d window.
+- New: `shared/types/dashboard.ts`, `shared/utils/trend.ts` (+ spec),
+  `server/utils/dashboard.ts`, `server/api/dashboard/{overview,analytics}.get.ts`,
+  `app/composables/useDashboard{Overview,Analytics}.ts`, and eleven components
+  under `app/components/dashboard/` (+ `ChannelPanel.spec.ts`,
+  `TrendChart.spec.ts`).
+- **No migration.** It reads tables that already existed.
+- Channel ownership is `user.name` matched case-insensitively against
+  `clips.creator` / `live_streams.streamer_name` — unchanged by the `channels`
+  table added the same day (ADR-018 §1 confirms this explicitly).
+
+**⚠️ NOT VERIFIED — do this first if you're picking it up.** The same failure
+the watch-page session hit happened again: the shell tool's safety classifier
+was down for most of this session, so **none** of the toolchain was run
+against this work. Still owed:
+
+1. `npm run lint && npm run typecheck` — nothing has been type-checked. The
+   likeliest breakages are in `server/utils/dashboard.ts`: the conditional
+   `handle ? db.select(...) : Promise.resolve([])` branches produce union types,
+   and `z.enum(ANALYTICS_RANGES)` passes a `readonly` tuple to Zod 4.
+2. `npm run test` — `shared/utils/trend.spec.ts`,
+   `app/components/dashboard/ChannelPanel.spec.ts` and `TrendChart.spec.ts`
+   have never been executed.
+3. Eyeball `/dashboard` and `/dashboard/analytics` signed in as a seeded
+   handle (e.g. `Viper_Squadron`) *and* as a user with no channel, since the
+   empty state is half the design.
+4. No e2e spec exists for either page yet.
+
+**Known follow-ups** (deliberate, not oversights):
+
+- `readCreatorOverview` duplicates counts that `selectChannelRows` (ADR-018)
+  already computes; see the "Overlap" section in dashboard.md before extending
+  either.
+- The dashboard doesn't yet read the new `channels` table for display name or
+  avatar — it shows the raw handle. Cheap win now that ADR-018 landed.
+- `/dashboard/stream` is still a `ComingSoon` placeholder (Phase 7 ingest).
+
+**Graph**: `graphify-out/graph.json` + `GRAPH_REPORT.md` were rebuilt this
+session (2186 nodes, 2712 edges, 357 communities). Community labelling, the
+`graph.html` export and manifest cleanup did **not** run — same classifier
+outage. Re-run `graphify update .` to finish; the intermediates are all still
+in `graphify-out/`.
+
+---
+
+## Session: Pinia adopted for shared client state (2026-08-07)
+
+**Why**: `pinia` + `@pinia/nuxt` were installed and registered in
+`nuxt.config.ts` but had **zero** usage — no `app/stores/`, no `defineStore`
+anywhere. Shared client state was instead being threaded through props.
+Rationale, rejected alternatives and the client-state/server-state split are in
+**ADR-019**.
+
+**Built**:
+
+- `app/stores/auth.ts` (replaces `composables/useAuth.ts`) and
+  `app/stores/watchlist.ts` (replaces `composables/useWatchlist.ts`). Both old
+  composables are **deleted**; all call sites moved.
+- Comment tree no longer drills viewer identity. `canPost` / `authorName` /
+  `authorImage` used to travel five levels to `WatchCommentComposer`; those
+  props are gone from `CommentsPanel`, `WatchComments`, `WatchCommentItem` and
+  the composer, which now read `stores/auth`. Same for `canPost` on `WatchChat`.
+- `isSaved` is no longer passed as a function prop. `ClipGrid`,
+  `LiveChannelGrid`, `LiveSignalsRail` and `WatchUpNext` read/write the
+  watchlist store directly; the `toggle-save-related` emit chain through
+  `WatchLayout` is deleted. Leaf cards keep a plain `saved: boolean`.
+- `WatchlistPanel` reads the store instead of taking
+  `savedClips`/`savedLive`/`hydrated` + `remove`/`clear` emits.
+- `zz-watch-preview.vue` seeds `useAuthStore().session` instead of passing
+  identity props — the fixture-driven preview still works.
+- `WatchChat.spec.ts` updated: signed-in/out is now a store seed, not a prop.
+
+**Deliberately NOT migrated** (see ADR-019 "Rejected"): TanStack Query server
+state, the dashboard (already correct one-level prop flow), the Vidstack player
+tree, and single-component UI refs.
+
+**⚠️ NOT VERIFIED — do this first if you're picking it up.** The shell tool's
+safety classifier was down for this entire session (same outage the previous
+two sessions hit), so **no** toolchain ran against this work. Still owed:
+
+1. `npm run typecheck` — the store files are the risk. They rely on Nuxt/VueUse
+   auto-imports inside `app/stores/*.ts` (`ref`, `computed`, `useLocalStorage`,
+   `tryOnMounted`, `useRequestFetch`, `navigateTo`). If auto-imports don't reach
+   that directory, add explicit imports.
+2. `npm run test` — in particular whether `useAuthStore()` can be called from a
+   spec body under `@vitest-environment nuxt` (it needs @pinia/nuxt's plugin to
+   have set the active Pinia). If it throws, wrap the seed in the mount context
+   or add `@pinia/testing`.
+3. `npm run lint` — several files lost imports; unused-import violations are
+   plausible.
+4. Eyeball `/watch/[slug]` signed in *and* signed out (composer vs log-in
+   prompt, live chat box), plus the save button on `/clips`, `/live`,
+   `/category/[slug]` and the channel grid — and confirm the watchlist survives
+   a reload (that's the `skipHydrate` call in `stores/watchlist.ts` doing its
+   job; without it SSR's empty `[]` overwrites localStorage).
+
+**Concurrent session note**: `app/components/watch/WatchView.vue` changed on
+disk mid-session — `useChannelFollow` moved from `composables/useWatchEngagement`
+to `composables/useChannel`. That move was **not** made by this session; the
+edits here were reconciled against it. `app/components/channel/ChannelVideoGrid.vue`
+(untracked, from the channel work) also used `useWatchlist` and was pointed at
+the new store so deleting the composable wouldn't break it.
+
+---
+
+## Channels session, 2026-08-07 (appended — ran alongside the dashboard/Pinia session)
+
+**Built**: channel pages and a ranked channel directory. Full write-up in
+[channels.md](./channels.md), decisions in ADR-018.
+
+- `/channel/[handle]` — banner + avatar + name/verified + stats + follow/share,
+  a live ribbon when the channel is on air, and four tabs (Home / Videos / Live
+  / About) whose selection lives in the URL as `?tab=`.
+- `/channels` — directory ranked by a written-down score, with Top / Most
+  followers / Most viewed / Live now / Newest orders, debounced search, category
+  filter, and a Follow button on every card. Added to the header nav.
+- The watch page's channel bar (avatar + name) is now a link into the channel —
+  the click-through the page was missing.
+- **New table `channels`** (identity only: display name, tagline, bio, avatar,
+  banner, website, location, verified, created). Every number — followers,
+  views, clip count, live-now — stays derived by query. `clips.creator` /
+  `live_streams.streamer_name` / `follows.channel` are untouched free text and
+  join on `lower(...)`, so ADR-017's `user.name` dashboard ownership is
+  unaffected.
+- New files: `server/db/schema/channels.ts`, `server/utils/channels.ts`
+  (rewritten — `readChannelSummary` kept as-is), `server/api/channels/index.get.ts`
+  + `[name]/{profile,videos}.get.ts`, `shared/types/channel.ts`,
+  `shared/utils/channel.ts` (+ spec), `app/composables/{useChannel,useChannelTab}.ts`,
+  ten components under `app/components/channel/` (+ `ChannelDirectoryCard.spec.ts`),
+  `app/utils/channel.ts`, `app/pages/{channels.vue,channel/[handle].vue}`,
+  `e2e/channel.spec.ts`, `scripts/seed-{channels,follows}.mjs`.
+- `ChannelAvatar.vue` moved from `app/components/watch/` to `app/components/`
+  (watch, comments, chat, channel page and directory all render it now).
+- `useChannelFollow` moved out of `useWatchEngagement.ts` into `useChannel.ts`,
+  and now keys on the canonical lowercase handle so the watch page and the
+  channel page share one follow cache entry.
+- Seeds: `db:seed` now runs clips → live → **channels → follows** → comments →
+  chat. `seed-follows.mjs` creates 120 inert demo accounts (`demo-follower-*`,
+  `@demo.streamify.local`, **no `account` row so none can sign in**) purely so
+  the follower ranking has real rows to rank. Approved explicitly by the user.
+  Remove with `delete from "user" where id like 'demo-follower-%';`.
+
+**⚠️ NOT VERIFIED — do this first if you're picking it up.** Same cause as the
+two sessions before it: the shell tool's safety classifier was down for most of
+this session, so almost none of the toolchain ran. Still owed:
+
+1. **`npm run db:generate` — the migration for `channels` does not exist yet.**
+   The schema file is written and exported from `index.ts`, but nothing has
+   been diffed or applied. Every channel route 404s or 500s until this runs.
+   Note: the concurrent session added `server/db/schema/notification-reads.ts`
+   with no migration either, so the generated `0004_*` will contain **both**
+   tables. The user approved this explicitly rather than hand-writing one.
+2. `npm run db:migrate && npm run db:seed`
+3. `npm run lint && npm run typecheck && npm run test && npm run test:e2e`.
+   Likeliest breakages, all in code that was never compiled:
+   - `db.execute<ChannelRow>()` in `server/utils/channels.ts` — drizzle's
+     generic wants a type with an index signature; `ChannelRow` is a `type`
+     alias for that reason, but the postgres-js `RowList` return may still
+     need a cast at the call sites.
+   - `z.enum(CLIP_CATEGORIES)` in `server/api/channels/index.get.ts` passes a
+     `readonly` tuple to Zod 4 — same shape the dashboard session flagged.
+   - `e2e/channel.spec.ts` and `ChannelDirectoryCard.spec.ts` have never run.
+4. Eyeball `/channels` (each sort actually reorders), `/channel/canvas_queen`
+   (has both clips and a live session), `/channel/first_take` (live only, no
+   clips → empty Videos tab), and the channel link on `/watch/clip-rendering`.
+
+**Concurrent-session note**: this ran at the same time as a session that
+migrated `useAuth` → `stores/auth` and `useWatchlist` → `stores/watchlist`
+(both composables are now deleted) and is adding search + notifications. That
+session edited two of this one's new components in place to use the stores —
+left as-is, and the rest of this work was written against the stores for the
+same reason. If `git status` looks strange around these files, that's why.
