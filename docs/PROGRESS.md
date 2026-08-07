@@ -101,6 +101,24 @@ deliverable is actually complete vs. scaffolded) — don't take low-numbered
   - Known gaps, deliberate: comments can't be posted; up-next is
     category-only (no recommender); live viewer counts stay static (Phase 7);
     `follows.channel` is a text handle because there's no `channels` table.
+  - **⚠️ NOT YET VERIFIED — do this first if you're picking it up.** The
+    session that wrote this lost the ability to execute shell commands
+    partway through (the tool's safety classifier was down), so *none* of
+    the toolchain was run against it. Specifically still owed:
+    1. `npm run db:generate` — **the `0003_*` migration does not exist yet.**
+       Every schema file under `server/db/schema/` is written and exported
+       from `index.ts`, but nothing has been diffed or applied. Nothing
+       involving the four new tables or the two new `description` columns
+       can work until this runs.
+    2. `npm run db:migrate && npm run db:seed`
+    3. `npm run lint && npm run typecheck && npm run test && npm run test:e2e`
+       — `e2e/watch.spec.ts` is written but has never been executed, and
+       neither have `WatchChat.spec.ts`, `WatchUpNextCard.spec.ts`,
+       `app/utils/chat.spec.ts`, `app/utils/reactions.spec.ts`.
+    4. Eyeball `/zz-watch-preview` (fixtures, both modes) and then
+       `/watch/clip-midnight-echo` + `/watch/Viper_Squadron` in a browser.
+    Treat the whole watch page as unverified code review-ready work, not as
+    "done", until the above passes.
 - The "Live Signals" rail on `/clips` consumes that same endpoint, so it now
   shows real rows too (`LiveSignal` gained `title`/`category`/`uptime`/
   `videoUrl` additively). Still Phase 7 and unbuilt: RTMPS ingest, stream

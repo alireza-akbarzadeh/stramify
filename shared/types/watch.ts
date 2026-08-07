@@ -59,8 +59,12 @@ export interface RelatedItem {
 
 /**
  * A comment on a clip. `userId` is null for seeded rows; `authorName` is
- * always present so the list renders identically either way, and enabling
- * posting later doesn't need a migration.
+ * always present so the list renders identically either way.
+ *
+ * `likes` is the seeded baseline plus real `comment_likes` rows, so a comment
+ * written in the app starts at 0 and counts up honestly. `likedByMe` and
+ * `isMine` are always false when signed out — the UI reads them to decide
+ * which affordances to show, but the server re-checks ownership on delete.
  */
 export interface WatchComment {
   id: string
@@ -68,12 +72,20 @@ export interface WatchComment {
   authorImage: string | null
   body: string
   likes: number
+  likedByMe: boolean
+  isMine: boolean
   /** Pre-formatted relative time, e.g. `"2h ago"`. */
   age: string
   replies: WatchComment[]
 }
 
 export type CommentSort = 'new' | 'top'
+
+/** What the composer sends. `parentId` set = a reply, one level deep only. */
+export interface CommentDraft {
+  body: string
+  parentId?: string | null
+}
 
 /** One live-chat line. Flat by design — chat has no threading. */
 export interface ChatMessage {

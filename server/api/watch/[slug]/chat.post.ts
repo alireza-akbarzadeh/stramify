@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { db } from '../../../db/client'
 import { chatMessages } from '../../../db/schema'
-import { resolveWatchTarget } from '../../../utils/watch'
+import { resolveLiveStream } from '../../../utils/watch'
 import { requireUser } from '../../../utils/session'
 import type { ChatMessage } from '#shared/types/watch'
 
@@ -28,19 +28,16 @@ export default defineEventHandler(async (event): Promise<ChatMessage> => {
     throw createError({ statusCode: 400, statusMessage: 'Message must be 1–200 characters' })
   }
 
-  const resolved = await resolveWatchTarget(parsed.data.slug)
-  if (!resolved) {
-    throw createError({ statusCode: 404, statusMessage: 'That video is not available' })
-  }
-  if (resolved.kind !== 'live') {
-    throw createError({ statusCode: 400, statusMessage: 'This video does not have live chat' })
+  const stream = await resolveLiveStream(parsed.data.slug)
+  if (!stream) {
+    throw createError({ statusCode: 404, statusMessage: 'That channel is not live right now' })
   }
 
   const [row] = await db
     .insert(chatMessages)
     .values({
       id: `chat-${crypto.randomUUID()}`,
-      streamId: resolved.row.id,
+      streamId: stream.id,
       userId: user.id,
       authorName: user.name,
       body: body.data.body

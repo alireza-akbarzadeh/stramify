@@ -71,6 +71,22 @@ export async function resolveWatchTarget(slug: string): Promise<ResolvedTarget |
   return null
 }
 
+/**
+ * Just the live stream for a handle, or `null`.
+ *
+ * `resolveWatchTarget` costs two queries for a live slug (clips miss, then
+ * live hit). The chat endpoints are live-only and one of them is polled every
+ * few seconds per viewer, so they take this single-query path instead.
+ */
+export async function resolveLiveStream(slug: string): Promise<LiveStreamRow | null> {
+  const [row] = await db
+    .select()
+    .from(liveStreams)
+    .where(ilike(liveStreams.streamerName, slug))
+    .limit(1)
+  return row ?? null
+}
+
 export function clipToRelated(row: ClipRow): RelatedItem {
   return {
     id: row.id,
