@@ -1,23 +1,26 @@
 {
   "cSpell.words": [
-    "Nuxt",
-    "Pinia",
-    "VueUse",
-    "NuxtUI",
-    "VueSonner",
-    "Shadcn",
-    "TanStack",
-    "Zod",
-    "Supabase",
-    "Drizzle",
     "Authjs",
-    "Unhead",
-    "Nitro",
-    "H3",
     "Defu",
-    "Radix",
+    "Drizzle",
+    "H3",
     "Lucide",
-    "Tailwindcss"
+    "Nitro",
+    "Nuxt",
+    "NuxtUI",
+    "Pinia",
+    "Radix",
+    "Shadcn",
+    "sonner",
+    "Streamify",
+    "Supabase",
+    "Tailwindcss",
+    "TanStack",
+    "Unhead",
+    "VueSonner",
+    "VueUse",
+    "watchlist",
+    "Zod"
   ],
 
   // Default formatter
@@ -101,13 +104,7 @@
   },
 
   // ESLint
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact",
-    "vue"
-  ],
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact", "vue"],
 
   "eslint.alwaysShowStatus": true,
   "eslint.format.enable": true,
