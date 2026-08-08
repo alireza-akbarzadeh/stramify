@@ -1,107 +1,89 @@
 <script setup lang="ts">
-const open = ref(false)
+import { Menu } from '@lucide/vue'
+import { storeToRefs } from 'pinia'
+import { Button } from '@/components/ui/button'
+import { Sheet, SheetTrigger } from '@/components/ui/sheet'
+import { useAuthStore } from '@/stores/auth'
+import { useScrollHeader } from '@/composables/useScrollHeader'
+import { headerLinks, isNavLinkActive } from '@/utils/nav'
+import AppHeaderMobileNav from './AppHeaderMobileNav.vue'
 
-const navLinks = [
-  { label: 'Live', to: '/live' },
-  { label: 'Categories', to: '/category' },
-  { label: 'Following', to: '/following' }
-]
+/**
+ * The public chrome's top bar (see `layouts/default.vue`).
+ *
+ * Every colour here is a theme token — `bg-glass`, `border-border`,
+ * `text-muted-foreground` — so the same markup reads correctly in light and
+ * dark; nothing is pinned to a literal black/white.
+ *
+ * It is `position: fixed` and transparent until you scroll, which is why the
+ * landing hero owns its own top padding rather than the layout adding one.
+ *
+ * Signed in, the right-hand cluster becomes notifications + the account menu
+ * (`UserMenu` — the same menu the app shell renders); signed out it stays the
+ * two conversion CTAs.
+ */
+const route = useRoute()
+const open = ref(false)
+const { scrolled, hidden } = useScrollHeader()
+const { isAuthenticated } = storeToRefs(useAuthStore())
 </script>
 
 <template>
-  <header class="sticky top-0 z-40 border-b border-white/10 bg-black/80 backdrop-blur">
+  <header
+    :class="[
+      'fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none',
+      hidden && !open ? '-translate-y-full' : 'translate-y-0',
+      scrolled ? 'border-b border-border bg-glass backdrop-blur-xl' : 'border-b border-transparent'
+    ]"
+  >
     <nav
-      class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+      class="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8"
       aria-label="Primary"
     >
-      <NuxtLink
-        to="/"
-        class="flex items-center gap-2 text-lg font-semibold tracking-tight text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-md"
-      >
-        <span class="inline-block h-6 w-6 rounded-md bg-rose-600" aria-hidden="true" />
-        Streamify
-      </NuxtLink>
+      <BrandMark />
 
-      <ul class="hidden items-center gap-8 md:flex">
-        <li v-for="link in navLinks" :key="link.to">
+      <ul class="ml-4 hidden items-center gap-1 md:flex">
+        <li v-for="link in headerLinks" :key="link.to">
           <NuxtLink
             :to="link.to"
-            class="text-sm font-medium text-slate-300 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-md"
+            :aria-current="isNavLinkActive(link.to, route.path) ? 'page' : undefined"
+            :class="[
+              'rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-foreground/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              isNavLinkActive(link.to, route.path) ? 'text-foreground' : 'text-muted-foreground'
+            ]"
           >
             {{ link.label }}
           </NuxtLink>
         </li>
       </ul>
 
-      <div class="hidden items-center gap-3 md:flex">
-        <NuxtLink
-          to="/login"
-          class="cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-slate-200 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
-        >
-          Log in
-        </NuxtLink>
-        <NuxtLink
-          to="/signup"
-          class="cursor-pointer rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-        >
-          Start streaming
-        </NuxtLink>
-      </div>
+      <div class="ml-auto flex items-center gap-2">
+        <div v-if="isAuthenticated" class="hidden sm:block">
+          <NotificationBell />
+        </div>
+        <ThemeToggle />
 
-      <button
-        type="button"
-        class="cursor-pointer rounded-md p-2 text-slate-200 md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
-        :aria-expanded="open"
-        aria-controls="mobile-nav"
-        aria-label="Toggle menu"
-        @click="open = !open"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            v-if="!open"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"
-          />
-          <path v-else stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
+        <UserMenu v-if="isAuthenticated" />
+        <template v-else>
+          <Button as-child variant="ghost" size="sm" class="hidden md:inline-flex">
+            <NuxtLink to="/login">Log in</NuxtLink>
+          </Button>
+          <Button as-child size="sm" class="hidden md:inline-flex">
+            <NuxtLink to="/signup">Start streaming</NuxtLink>
+          </Button>
+        </template>
+
+        <Sheet v-model:open="open">
+          <SheetTrigger
+            class="grid size-10 cursor-pointer place-items-center rounded-full border border-border text-foreground transition-colors duration-200 hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+            aria-label="Open menu"
+          >
+            <Menu class="size-5" aria-hidden="true" />
+          </SheetTrigger>
+
+          <AppHeaderMobileNav />
+        </Sheet>
+      </div>
     </nav>
-
-    <div v-if="open" id="mobile-nav" class="border-t border-white/10 px-4 py-4 md:hidden">
-      <ul class="flex flex-col gap-1">
-        <li v-for="link in navLinks" :key="link.to">
-          <NuxtLink
-            :to="link.to"
-            class="block rounded-md px-3 py-3 text-base font-medium text-slate-200 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
-            @click="open = false"
-          >
-            {{ link.label }}
-          </NuxtLink>
-        </li>
-      </ul>
-      <div class="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
-        <NuxtLink
-          to="/login"
-          class="rounded-lg px-3 py-3 text-center text-sm font-semibold text-slate-200 hover:bg-white/5"
-          @click="open = false"
-          >Log in</NuxtLink
-        >
-        <NuxtLink
-          to="/signup"
-          class="rounded-lg bg-rose-600 px-3 py-3 text-center text-sm font-semibold text-white"
-          @click="open = false"
-          >Start streaming</NuxtLink
-        >
-      </div>
-    </div>
   </header>
 </template>

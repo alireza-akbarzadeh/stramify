@@ -5,10 +5,16 @@ import AppSearch from '@/components/search/AppSearch.vue'
 import NotificationBell from '@/components/notifications/NotificationBell.vue'
 
 /**
- * The app shell's top bar: sidebar toggle, search, notifications, theme.
+ * The app shell's top bar: sidebar toggle, search, notifications, theme,
+ * account.
  *
  * It carries no page title — the page underneath owns its own heading, which
  * is what lets one bar sit above `/live`, `/watch/...` and `/dashboard` alike.
+ *
+ * `UserMenu` is the same account menu the public `AppHeader` renders, so the
+ * avatar is in the same corner on both sides of the app. It stands in for the
+ * sidebar's account control whenever the sidebar is collapsed or off-canvas —
+ * and renders nothing at all when signed out.
  */
 </script>
 
@@ -24,6 +30,7 @@ import NotificationBell from '@/components/notifications/NotificationBell.vue'
     <div class="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
       <NotificationBell />
       <ThemeToggle />
+      <UserMenu />
     </div>
   </header>
 </template>

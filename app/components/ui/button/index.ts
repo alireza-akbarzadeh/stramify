@@ -11,8 +11,12 @@ export const buttonVariants = cva(
           'bg-primary text-primary-foreground shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_24px_-6px_rgba(225,29,72,0.45)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_12px_32px_-4px_rgba(225,29,72,0.6)] hover:-translate-y-px active:translate-y-0',
         secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
         destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:opacity-90',
-        outline: 'border border-border bg-white/[0.02] text-foreground hover:bg-white/[0.06] hover:border-white/20',
-        ghost: 'bg-transparent text-foreground hover:bg-white/[0.06]',
+        // Tinted with `foreground`, not literal white: a white overlay is
+        // invisible on the light theme's near-white background, which left
+        // `ghost` and `outline` with no hover feedback at all in light mode.
+        outline:
+          'border border-border bg-foreground/[0.02] text-foreground hover:bg-foreground/[0.06] hover:border-foreground/20',
+        ghost: 'bg-transparent text-foreground hover:bg-foreground/[0.06]',
         link: 'bg-transparent text-primary underline-offset-4 hover:underline'
       },
       size: {

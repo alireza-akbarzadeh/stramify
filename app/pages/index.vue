@@ -13,19 +13,15 @@ useHead({
 
 <template>
   <div>
-    <AppHeader />
-    <main id="main-content">
-      <LandingHero />
-      <TrustedBy />
-      <BentoFeatures />
-      <ChatShowcase />
-      <DashboardShowcase />
-      <StatsBand />
-      <Testimonials />
-      <PricingSection />
-      <FaqSection />
-      <FinalCta />
-    </main>
-    <AppFooter />
+    <LandingHero />
+    <TrustedBy />
+    <BentoFeatures />
+    <ChatShowcase />
+    <DashboardShowcase />
+    <StatsBand />
+    <Testimonials />
+    <PricingSection />
+    <FaqSection />
+    <FinalCta />
   </div>
 </template>

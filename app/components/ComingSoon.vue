@@ -3,7 +3,7 @@ defineProps<{ title: string; description: string }>()
 </script>
 
 <template>
-  <div class="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
+  <div class="flex min-h-[60vh] flex-col items-center justify-center px-4 pt-16 text-center">
     <Reveal>
       <p class="text-sm font-medium text-primary">Coming soon</p>
       <h1 class="mt-2 text-3xl font-semibold text-foreground">{{ title }}</h1>

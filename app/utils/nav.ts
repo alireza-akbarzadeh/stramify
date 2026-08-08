@@ -7,6 +7,8 @@ import {
   House,
   LayoutDashboard,
   Radio,
+  ShieldCheck,
+  ShieldHalf,
   Tv,
   Video
 } from '@lucide/vue'
@@ -37,6 +39,16 @@ export const discoverLinks: NavLink[] = [
   { label: 'Channels', to: '/channels', icon: Tv }
 ]
 
+/**
+ * The public header's primary nav. Derived from `discoverLinks` rather than
+ * written out again so the two navs can't drift: Home is dropped (the wordmark
+ * is already the link home) and so is anything still badged as a placeholder —
+ * the marketing chrome shouldn't advertise a route that isn't built yet.
+ */
+export const headerLinks: NavLink[] = discoverLinks.filter(
+  (link) => link.to !== '/' && !link.badge
+)
+
 export const libraryLinks: NavLink[] = [
   { label: 'Watchlist', to: '/watchlist', icon: Bookmark },
   { label: 'Following', to: '/following', icon: Heart, badge: 'Phase 10' }
@@ -47,6 +59,17 @@ export const creatorLinks: NavLink[] = [
   { label: 'Overview', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Go live', to: '/stream', icon: Radio, badge: 'Phase 7' },
   { label: 'Analytics', to: '/analytics', icon: BarChart3 }
+]
+
+/**
+ * Where the account menu can take you — shared by every surface that renders
+ * it (`UserMenu` in the header and the app top bar, `SidebarUserMenu` in the
+ * sidebar footer) via `useAccountMenu`, so the options can't drift apart.
+ */
+export const accountLinks: NavLink[] = [
+  { label: 'Creator dashboard', to: '/dashboard', icon: LayoutDashboard },
+  { label: 'Security', to: '/settings/security', icon: ShieldCheck },
+  { label: 'Two-factor auth', to: '/settings/two-factor', icon: ShieldHalf }
 ]
 
 /**

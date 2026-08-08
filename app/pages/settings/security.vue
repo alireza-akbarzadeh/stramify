@@ -46,9 +46,7 @@ async function changePassword() {
 
 <template>
   <div class="relative min-h-dvh bg-background">
-    <AppHeader />
-
-    <main id="main-content" class="mx-auto max-w-2xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-2xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
       <Reveal>
         <h1 class="text-3xl font-semibold tracking-tight text-foreground">Security</h1>
         <p class="mt-2 text-muted-foreground">
@@ -136,8 +134,6 @@ async function changePassword() {
           </div>
         </section>
       </Reveal>
-    </main>
-
-    <AppFooter />
+    </div>
   </div>
 </template>

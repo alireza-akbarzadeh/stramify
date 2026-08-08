@@ -3,9 +3,5 @@ useHead({ title: 'About — Streamify' })
 </script>
 
 <template>
-  <main id="main-content">
-    <AppHeader />
-    <ComingSoon title="About Streamify" description="Our story is being written — check back soon." />
-    <AppFooter />
-  </main>
+  <ComingSoon title="About Streamify" description="Our story is being written — check back soon." />
 </template>
