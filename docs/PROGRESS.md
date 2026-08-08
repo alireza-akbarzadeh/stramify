@@ -379,6 +379,53 @@ the new store so deleting the composable wouldn't break it.
 
 ---
 
+## Header + account menu session, 2026-08-08 (appended)
+
+**Built**: the public header, restored to the design system and given a real
+signed-in state; one account menu now shared by every surface that renders one.
+
+- `AppHeader.vue` was regressed in commit `0e48e09` to hard-coded dark colours
+  (`bg-black/80`, `text-white`, `text-slate-300`, `rose-600`) with no auth
+  state and no theme toggle. Rewritten on tokens (`bg-glass`, `border-border`,
+  `text-muted-foreground`, `ring-ring`), so it reads correctly in light **and**
+  dark. Scroll behaviour (`useScrollHeader`) and `BrandMark` are back.
+- Signed in, the right cluster is notifications + `UserMenu`; signed out it's
+  Log in / Start streaming. Session comes from `stores/auth`, which is filled
+  during SSR, so there's no signed-out flash.
+- Mobile nav moved from a hand-rolled `v-if` panel to a Reka `Sheet`
+  (`AppHeaderMobileNav.vue`) — real focus trap, scroll lock, and Track-A
+  `data-state` motion per the `motion` skill. Every link is a `SheetClose`.
+- **One account menu, three triggers.** `AccountMenuContent.vue` (+
+  `AccountAvatar.vue`, `useAccountMenu.ts`) holds the panel; `UserMenu.vue`
+  (avatar) and `SidebarUserMenu.vue` (sidebar footer) are just triggers. The
+  two used to be near-identical copies with *different* link lists.
+- `UserMenu` added to `DashboardTopBar` — the app shell had no account control
+  outside the sidebar, so there was none at all when the sidebar was collapsed
+  or off-canvas.
+- Dead links fixed: the account menu pointed at `/studio` and the footer at
+  `/studio{,/stream,/analytics}` — no such pages. Now `/dashboard`, `/stream`,
+  `/analytics`. `app/utils/nav.ts` gained `headerLinks` (derived from
+  `discoverLinks`, minus Home and minus badged placeholders) and `accountLinks`,
+  and `nav.spec.ts` now asserts every link in every group resolves to a real
+  page file.
+- **Doubled chrome fixed**: `layouts/default.vue` renders `AppHeader` + `main` +
+  `AppFooter`, but `index`, `about`, `careers`, `security`, `settings/security`
+  and the two `zz-*` previews each rendered their own on top of it — two headers,
+  two footers, and a nested duplicate `<main id="main-content">`. Pages now
+  render content only.
+- `buttonVariants` `ghost`/`outline` were tinted with literal `white/[0.06]`,
+  invisible on the light theme. Now `foreground/…`.
+
+**⚠️ NOT VERIFIED — same cause as the three sessions before it**: the shell
+tool's safety classifier was down for this session, so `lint`, `typecheck`,
+`test` and the dev server never ran. Nothing here touches the server or the
+DB — it's components, one composable, `utils/nav.ts` and page templates — but
+before building on it, run:
+`npm run lint && npm run typecheck && npm run test`, then eyeball `/` signed
+out and signed in, at desktop and mobile widths, in both themes. Watch for:
+`AccountAvatar`'s `class` prop merge (shadcn-vue pattern, used elsewhere here),
+and the `SheetClose as-child` → `NuxtLink` chains in `AppHeaderMobileNav`.
+
 ## Channels session, 2026-08-07 (appended — ran alongside the dashboard/Pinia session)
 
 **Built**: channel pages and a ranked channel directory. Full write-up in

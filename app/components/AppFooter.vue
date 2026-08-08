@@ -12,9 +12,9 @@ const columns = [
   {
     title: 'Creators',
     links: [
-      ['Dashboard', '/studio'],
-      ['Go live', '/studio/stream'],
-      ['Analytics', '/studio/analytics']
+      ['Dashboard', '/dashboard'],
+      ['Go live', '/stream'],
+      ['Analytics', '/analytics']
     ]
   },
   {

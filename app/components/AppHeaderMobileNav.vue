@@ -24,7 +24,7 @@ const { isAuthenticated } = storeToRefs(useAuthStore())
 
 <template>
   <SheetContent side="right" class="w-[85%] gap-0 p-0 sm:max-w-sm">
-    <SheetHeader class="border-b border-border px-4 py-4">
+    <SheetHeader class="border-b border-border">
       <SheetTitle class="sr-only">Menu</SheetTitle>
       <SheetClose as-child>
         <BrandMark />
