@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useColorMode } from '@vueuse/core'
 import { Toaster as Sonner, type ToasterProps } from 'vue-sonner'
 
 const colorMode = useColorMode()
@@ -10,9 +11,9 @@ const props = withDefaults(defineProps<ToasterProps>(), {
 
 <template>
   <Sonner
-    :theme="colorMode.value === 'dark' ? 'dark' : 'light'"
-    class="toaster group"
     v-bind="props"
+    :theme="colorMode === 'dark' ? 'dark' : 'light'"
+    class="toaster group"
     :toast-options="{
       classes: {
         toast:
@@ -20,7 +21,8 @@ const props = withDefaults(defineProps<ToasterProps>(), {
         description: 'group-[.toast]:text-muted-foreground',
         actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
         cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
-        error: 'group-[.toaster]:!bg-destructive group-[.toaster]:!text-destructive-foreground group-[.toaster]:!border-destructive'
+        error:
+          'group-[.toaster]:!bg-destructive group-[.toaster]:!text-destructive-foreground group-[.toaster]:!border-destructive'
       }
     }"
   />
